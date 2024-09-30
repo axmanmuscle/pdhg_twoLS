@@ -1,16 +1,30 @@
 function run_test_prob_dr()
-b = [8;8;8];
+%%%
+%%% need to be able to run DR, AOI line search, Malitsky line search, our
+%%% line search
+%%% with multiple parameters WHY DO WE STILL HAVE TO TUNE TAU
+%%% Convergence to solution for each method
+%%% plots
+%%% write this tonight to let it run
+%%% make a function like this that takes in tau maybe?
+%%% need to save out obj value vs. iteration count for every method
+%%% in primal dual dr aoi wls this is "gamma"
+%%% omfg
+m = 300;
+n = 75;
+b = 8*ones([n, 1]);
 eps = 0.2;
-n = size(b, 1);
 
 %% problem is 
 % min f(x) + g(Ax)
-%A = [2 0 1;1 2 3; 8 4 6];
-A = randi(15, [9 3]);
-theta = 1/norm(A)^2 - 1e-6;
-% theta = 2;
+% f is an indicator function for an l2 ball around b with radius eps
+% g is the 1 norm
+A = randi(15, [m n]);
+ta = 1.01 * norm(A)^2;
+theta = 1/ta;
 tau = 0.1;
-Bt = chol((1/theta)*eye(9) - A*A');
+G = A*A';
+Bt = chol((1/theta)*eye(size(G)) - G);
 B = Bt';
 
 sigma = theta/tau;
@@ -20,7 +34,7 @@ f = @(x) 0;
 
 gtilde = @(x) norm(A*x(1:n) + B*x(n+1:end), 1);
 ftilde = @(x) full_f(x(1:n), b, eps);
-pf = @(x, t) [proxF(x(1:n), b, eps); zeros([9 1])];
+pf = @(x, t) [proxF(x(1:n), b, eps); zeros([m 1])];
 pgstar = @(x, t) proxConjL1(x, t, 1);
 % pgtilde = @(x, t) x - tau * [A'; B'] * pgstar(sigma*(A*x(1:n) + B*x(n+1:end)), sigma);
 pgtilde = @(x, t) x - tau * [A'; B'] * pgstar(t*(A*x(1:n) + B*x(n+1:end)), t);
@@ -29,7 +43,8 @@ pgtildestar = @(x, t) x - pgtilde(x, t);
 pg3 = @(x, t) tau * [A'; B'] * pgstar(sigma*(A*x(1:n) + B*x(n+1:end)), sigma);
 
 % x0 = [-20;-10; -30; 0; 0; 0];
-x0 = [-20;-10;-30;zeros([9 1])];
+% x0 = [-20;-10;-30;zeros([m 1])];
+x0 = [zeros([n 1]); zeros([m 1])];
 
 xStar = douglasRachford(x0, pf, pgtilde, 1);
 [xStar2, driters] = primal_dual_dr(x0, pf, pgtildestar);
@@ -38,7 +53,7 @@ xStar = douglasRachford(x0, pf, pgtilde, 1);
 [xStar6, aoiiters2, alphas] = primal_dual_dr_aoi_wls(x0, pf, pg3, f, g, 300);
 % [xStar7, aoiiters] = primal_dual_dr_aoi_newls(x0, pf, pgtildestar);
 
-[xStar8, newiters, taus] = pddr_malitsky_test(A);
+% [xStar8, newiters, taus] = pddr_malitsky_test(A);
 
 [xStar9, iters] = aoi_newls(x0,pf,pgstar, theta, A, B);
 [xStar10, ls_iters, alphas, objVals] = primal_dual_dr_aoi_newls(x0,pf,pgstar, ftilde, gtilde, 100, theta, A, B);

@@ -1,12 +1,20 @@
 function [xStar, iters, taus] = pddr_malitsky_test(A)
-b = [8;8;8];
+m = 300;
+n = 75;
+b = 8*ones([n, 1]);
 eps = 0.2;
-n = size(b, 1);
 
-theta = 1/norm(A)^2 - 1e-6;
+%% problem is 
+% min f(x) + g(Ax)
+%A = [2 0 1;1 2 3; 8 4 6];
+ta = 1.01 * norm(A)^2;
+theta = 1/ta;
+% theta = 2;
 tau = 0.1;
-Bt = chol((1/theta)*eye(9) - A*A');
+G = A*A';
+Bt = chol((1/theta)*eye(size(G)) - G);
 B = Bt';
+
 sigma = theta/tau;
 
 pf = @(x, t) [proxF(x(1:n), b, eps); zeros([9 1])];
