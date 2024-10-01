@@ -32,13 +32,11 @@ sigma = theta/tau;
 g = @(x) norm(x, 1);
 ga = @(x) norm(A*x, 1);
 f = @(x) 0;
-obj = @(x) f(x) + ga(x);
 proxf = @(x, t) proxF(x, b, eps);
 proxg = @(x, t) proxL1Complex(x, t);
 
 gtilde = @(x) norm(A*x(1:n) + B*x(n+1:end), 1);
 ftilde = @(x) full_f(x(1:n), b, eps);
-objmod = @(x) ftilde(x) + gtilde(x);
 pf = @(x, t) [proxF(x(1:n), b, eps); zeros([m 1])];
 pgstar = @(x, t) proxConjL1(x, t, 1);
 % pgtilde = @(x, t) x - tau * [A'; B'] * pgstar(sigma*(A*x(1:n) + B*x(n+1:end)), sigma);
@@ -49,12 +47,10 @@ pg3 = @(x, t) tau * [A'; B'] * pgstar(sigma*(A*x(1:n) + B*x(n+1:end)), sigma);
 
 % x0 = [-20;-10; -30; 0; 0; 0];
 % x0 = [-20;-10;-30;zeros([m 1])];
-x0 = [50*randn([n 1]); zeros([m 1])];
-x0_dr = 50*randn([n 1]);
+x0 = [zeros([n 1]); zeros([m 1])];
+x0_dr = zeros([n 1]);
 
-[xStar_mod, drModObjVals] = douglasRachford(x0, pf, pgtilde, 1, 'N', 500, 'f', ftilde, 'g', gtilde);
-[xStar, drObjVals] = douglasRachford(x0_dr, proxf, proxg, 1, 'N', 500, 'f', f, 'g', ga);
-[xStar_pddr, objVals_pddr] = primal_dual_dr_test(x0,pf,pgtildestar,1,objmod);
+[xStar, drObjVals] = douglasRachford(x0_dr, proxf, pgtilde, 1, 'N', 5000, 'f', f, 'g', ga);
 [xStar2, driters] = primal_dual_dr(x0, pf, pgtildestar);
 [xStar3, dr2iters] = primal_dual_dr_2(x0, pf, pgtildestar);
 [xStar4, aoiiters] = primal_dual_dr_aoi(x0, pf, pgtildestar);
