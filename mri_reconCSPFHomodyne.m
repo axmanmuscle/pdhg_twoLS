@@ -5,12 +5,14 @@ function [recon, objValues] =  mri_reconCSPFHomodyne(kData, sFSR, varargin )
   p.addParameter( 'alg', 'douglasRachford' );
   p.addParameter( 'doChecks', false );
   p.addParameter( 'gamma', 1d-2, @ispositive );
+  p.addParameter( 'N', 1000, @ispositive );
   p.addParameter( 'printEvery', 1, @ispositive );
   p.addParameter( 'wavSplit', [], @isnumeric );
   p.parse( varargin{:} );
   alg = p.Results.alg;
   doChecks = p.Results.doChecks;
   gamma = p.Results.gamma;
+  N = p.Results.N;
   printEvery = p.Results.printEvery;
   wavSplit = p.Results.wavSplit;
   
@@ -204,27 +206,27 @@ function [recon, objValues] =  mri_reconCSPFHomodyne(kData, sFSR, varargin )
       tau = gamma;
       if numel( normA ) == 0, normA = powerIteration( @applyA, rand( size( k0 ) ) ); end
       [kStar,objValues] = pdhg( k0, @proxf, @proxgConj, tau, 'A', @applyA, 'normA', normA, 'sigma', gamma, ...
-        'N', 1000, 'f', @f, 'g', @g, 'verbose', true, 'printEvery', printEvery );
+        'N', N, 'f', @f, 'g', @g, 'verbose', true, 'printEvery', printEvery );
       xStar = zeros( size( x0 ) );
       xStar( 1 : nUnknown ) = kStar;
 
     case 'primalDualDR'
-      [xStar, objValues] = primalDualDR( x0, @proxf_tilde, @proxg_tildeConj, gamma, 'N', 1000, ...
+      [xStar, objValues] = primalDualDR( x0, @proxf_tilde, @proxg_tildeConj, gamma, 'N', N, ...
         'f', @f_tilde, 'g', @g_tilde, 'verbose', true, 'printEvery', printEvery );   %#ok<ASGLU>
 
     case 'primalDualDR_avgOp'
       pddrAvgOpObjF = @(x) g_tilde( proxf_tilde( x ) );
-      [xStar,objValues] = avgOpIter( x0, @S_pdDR, 'alpha', 0.5, 'N', 1000, ...
+      [xStar,objValues] = avgOpIter( x0, @S_pdDR, 'alpha', 0.5, 'N', N, ...
         'objFunction', pddrAvgOpObjF, 'verbose', true, 'printEvery', printEvery );
 
     case 'primalDualDR_avgOp_wls'
       objF = @(x) f_tilde( proxf_tilde(x) ) + g_tilde( proxf_tilde(x) );
-      [xStar,objValues,alphas] = avgOpIter_wLS( x0, @S_pdDR, 'N', 1000, ...
+      [xStar,objValues,alphas] = avgOpIter_wLS( x0, @S_pdDR, 'N', N, ...
         'objFunction', objF, 'verbose', true, 'printEvery', 1, 'doLineSearchTest', true );   %#ok<ASGLU>
 
     case 'pdhg_bothls'
       objF = @(x) f_tilde( proxf_tilde(x) ) + g_tilde( proxf_tilde(x) );
-      [xStar,objValues,alphas] = primal_dual_dr_aoi_newls( x0, @S_pdDR, 'N', 1000, ...
+      [xStar,objValues,alphas] = primal_dual_dr_aoi_newls( x0, @S_pdDR, 'N', N, ...
         'objFunction', objF, 'verbose', true, 'printEvery', 1, 'doLineSearchTest', true );
     otherwise
       error( 'Unrecognized algorithm' );

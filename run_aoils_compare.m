@@ -40,13 +40,17 @@ fftSamples_wavACR_pf( fsr > 0 ) = pfData( fsr > 0 );
 [~,phaseImg] = mri_reconPartialFourier( fftSamples_wavACR_pf, sFSR );
 phases = angle( phaseImg );
 
-gammas = 10.^(linspace(-8, 8, 15));
-allObj = zeros([numel(gammas) 1000]);
+N = 25000;
+gammas = 10.^(linspace(-6, 2, 30));
+aoiObj = zeros([numel(gammas) N]);
+aoiLSObj = zeros([numel(gammas) N]);
 parfor gamma_idx = 1:numel(gammas)
     gamma = gammas(gamma_idx);
     [xStar, objVals] = mri_reconCSPFHomodyne( fftSamples_wavACR_pf, sFSR, 'wavSplit', wavSplit, ...
-        'alg', 'primalDualDR_avgOp', 'gamma', gamma );
-    allObj(gamma_idx, :) = objVals;
+        'alg', 'primalDualDR_avgOp', 'gamma', gamma, 'N', N );
+    [xStar_ls, objVals_ls] = mri_reconCSPFHomodyne( fftSamples_wavACR_pf, sFSR, 'wavSplit', wavSplit, ...
+        'alg', 'primalDualDR_avgOp_wls', 'gamma', gamma, 'N', N );
+    aoiObj(gamma_idx, :) = objVals;
 end
 
 
