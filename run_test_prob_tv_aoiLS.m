@@ -15,9 +15,13 @@ figure; imshowscale(noised_im, 5);
 % compute stuff for PDDR line searches
 
 normA = powerIteration(@computeGradient, noised_im);
-tvMx = makeTVMx(size(noised_im));
-% b = chol(theta I - tvMx*tvMx');
-% b = b';
+A = makeTVMx(size(noised_im));
+ta = 1.01 * normA^2;
+theta = 1/ta;
+tau = 0.1;
+G = A*A';
+Bt = chol((1/theta)*eye(size(G)) - G);
+B = Bt';
 % then write the functions for the line search
 
 
@@ -36,7 +40,7 @@ for lambda_idx = 1:numel(lambdas)
     
     proxf = @(x, t) proxL2Sq(x, t, noised_im);
     proxgconj = @(x, t) proxConjL2L1(x, t, lambda);
-    proxgtildeconj = @(x, t) 
+    % proxgtildeconj = @(x, t) 
     
     best_idx = 0;
     best_obj = Inf;
