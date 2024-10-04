@@ -6,8 +6,9 @@ im = double(im) ./ 255;
 im = imresize(im, 0.25);
 
 noise = 0.08*randn(size(im));
-
 noised_im = im + noise;
+
+n = size(noised_im(:), 1);
 
 % show noised image
 figure; imshowscale(noised_im, 5);
@@ -32,11 +33,20 @@ for lambda_idx = 1:numel(lambdas)
     lambda = lambdas(lambda_idx);
     lstr = sprintf('lambda %f', lambda);
     disp(lstr);
+
     f = @(x) 0.5*norm(x - noised_im, 'fro')^2;
     g = @(x) lambda*tvNorm(x);
     ga = @(x) lambda * tvNorm(computeGradient(x));
     obj = @(x) f(x) + g(x);
     obja = @(x) f(x) + ga(x);
+
+    delta_y = @(x) deltay(x);
+    ftilde = @(x) f(x(1:n)) + delta_y(x(n+1: end));
+    gtilde = @(x) g(A*x(1:n) + B*(x(n+1:end)));
+    objtilde = @(x) ftilde(x) + gtilde(x);
+
+    % proxftilde = @(x, t)
+    % proxgtilde
     
     proxf = @(x, t) proxL2Sq(x, t, noised_im);
     proxgconj = @(x, t) proxConjL2L1(x, t, lambda);
@@ -73,9 +83,13 @@ for lambda_idx = 1:numel(lambdas)
 
     pause(2);
 
+end
+end
 
-
-
-
-
+function out = deltay(x)
+    if any(~x, 'all')
+        out = 0;
+    else
+        out = Inf;
+    end
 end
