@@ -1,4 +1,4 @@
-function run_test_prob_tv_aoiLS()
+function run_test_prob_tv_newls()
 %%% let's a total variation denoising problem
 im = imread('cameraman.tif');
 im = double(im) ./ 255;
@@ -76,10 +76,9 @@ for lambda_idx = 1:numel(lambdas)
         disp(gamma_idx);
         %%% define S_pdDR here
         gamma = gamma_vals(gamma_idx);
-        S_pdDR = @(in) -gamma * Rgtildeconj( Rftilde( in, gamma ) / gamma , 1/gamma );
-        
-        [xStar,objValues,alphas] = avgOpIter_wLS( x0(:), S_pdDR, 'N', 1000, ...
-        'objFunction', objtilde, 'verbose', true, 'printEvery', 1, 'doLineSearchTest', true );
+        maxIter = 1000;
+        [xStar, iters, alphas, objVals] = primal_dual_dr_aoi_newls(x0, ...
+            proxftilde,proxgconj, f, g, maxIter, theta, A, B)
     
         xend = proxf_flat(xStar(1:n), gamma);
         final_obj = obja(xend);
