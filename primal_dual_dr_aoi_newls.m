@@ -1,8 +1,8 @@
-function [xStar, iters, alphas, objVals] = primal_dual_dr_aoi_newls(x0,proxf,proxgconj, f, g, maxIter, theta, A, B)
+function [xStar, iters, alphas, objVals] = primal_dual_dr_aoi_newls(x0,proxf,proxgconj, f, g, maxIter, theta, A, B, gamma)
 
 %%% parameters
 alpha_bar = 0.5; % alpha_bar
-gamma = 3; % gamma for prox operators
+% gamma = 3; % gamma for prox operators
 eps = 0.03; % eps for (1 - eps) || rbar_k || in linesearch
 tol = 1e-7; % tolerance for exit criterion
 alpha_change = 1/1.4; % factor for change in alpha during linesearch
@@ -27,7 +27,7 @@ theta0 = 1;
 xk = x0;
 tauk = tau0;
 thetak = theta0;
-yk = zeros(size(A, 1));
+yk = zeros(size(A, 1), 1);
 
 for i = 1:maxIter
   [sxk, taukp1, thetakp1] = S(xk, tauk, thetak);
@@ -48,7 +48,7 @@ for i = 1:maxIter
   sub_theta = thetakp1;
   while true
     subiter = subiter + 1;
-%     fprintf('subiter %d\n', subiter);
+    fprintf('subiter %d\n', subiter);
     xkp1 = xk + alpha_k * rk;
     [sxkp1, sub_tau, sub_theta] = S(xkp1, sub_tau, sub_theta);
     rkp1 = sxkp1 - xkp1;
@@ -76,9 +76,9 @@ for i = 1:maxIter
 
   iters(i, :) = proxf(xk, gamma);
 
-  objVals(i) = f(proxf(xk)) + g(proxf(xk));
+  objVals(i) = f(proxf(xk, gamma)) + g(proxf(xk, gamma));
 
-  %if mod(i, 3) == 1
+  % if mod(i, 3) == 1
     fprintf('iter: %d   objVal: %d   res: %d  alpha: %d\n', i, objVals(i), norm(rkp1(:)), alpha_k );
   %end
 

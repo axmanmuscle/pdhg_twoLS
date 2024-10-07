@@ -59,14 +59,7 @@ for lambda_idx = 1:numel(lambdas)
     proxf_flat = @(x, t) proxL2Sq(x, t, noised_im(:));
 
     proxftilde = @(x, t) [proxf_flat(x(1:n), t); zeros(size(x(n+1:end)))];
-    proxgtilde = @(x, t) x - t*[A';B']*proxgconj((theta/t)*(A*x(1:n) + B*x(n+1:end)), theta/t);
-    proxgtildeconj = @(x, t) x - proxgtilde(x, t);
-
     objtilde = @(x) ftilde(proxftilde(x, 1)) + gtilde(proxftilde(x, 1));
-
-    Rftilde = @(x, t) 2*resize(proxftilde(x,t), size(x)) - x;
-    Rgtilde = @(x, t) 2*proxgtilde(x,t) - x;
-    Rgtildeconj = @(x, t) 2*proxgtildeconj(x, t) - x;
     
     best_idx = 0;
     best_obj = Inf;
@@ -74,18 +67,17 @@ for lambda_idx = 1:numel(lambdas)
     gamma_vals = 10.^(-8:4);
     for gamma_idx = 1:numel(gamma_vals)
         disp(gamma_idx);
-        %%% define S_pdDR here
         gamma = gamma_vals(gamma_idx);
         maxIter = 1000;
         [xStar, iters, alphas, objVals] = primal_dual_dr_aoi_newls(x0, ...
-            proxftilde,proxgconj, f, g, maxIter, theta, A, B)
+            proxftilde,proxgconj, ftilde, gtilde, maxIter, theta, A, B, gamma);
     
         xend = proxf_flat(xStar(1:n), gamma);
         final_obj = obja(xend);
         if final_obj < best_obj
             best_idx = gamma_idx;
             xBest = xend;
-            bestObjs = objVals_pdhg;
+            bestObjs = objVals;
             best_obj = final_obj;
         end
     end
