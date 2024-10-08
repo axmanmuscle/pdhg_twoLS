@@ -3,7 +3,7 @@ function run_test_prob_tv_newls()
 im = imread('cameraman.tif');
 im = double(im) ./ 255;
 
-im = imresize(im, 0.2);
+im = imresize(im, 0.1);
 
 noise = 0.08*randn(size(im));
 noised_im = im + noise;
@@ -17,7 +17,7 @@ figure; imshowscale(noised_im, 5);
 
 normA = powerIteration(@computeGradient, noised_im);
 A = makeTVMx(size(noised_im));
-ta = 1.01 * normA^2;
+ta = 1.1 * normA^2;
 theta = 1/ta;
 tau = 0.1;
 G = A*A';
@@ -45,11 +45,11 @@ for lambda_idx = 1:numel(lambdas)
 
     fflat = @(x) 0.5*norm(x - noised_im(:))^2;
 
-    objaf = @(x) fflat(x) + g(resize(x, sizex));
+    objaf = @(x) fflat(x) + ga(x);
 
     delta_y = @(x) deltay(x);
     ftilde = @(x) fflat(x(1:n)) + delta_y(x(n+1: end));
-    gtilde = @(x) g( resize(A*x(1:n) + B*(x(n+1:end)), sizex ) );
+    gtilde = @(x) g( reshape(A*x(1:n) + B*(x(n+1:end)), sizex ) );
     
 
     % proxftilde = @(x, t)
@@ -86,7 +86,7 @@ for lambda_idx = 1:numel(lambdas)
         end
     end
     
-    figure; imshowscale(resize(xBest, size(noised_im)),5); title(lstr)
+    figure; imshowscale(reshape(xBest, size(noised_im)),5); title(lstr)
     
     figure; plot(bestObjs); title(lstr);
     disp(best_idx);

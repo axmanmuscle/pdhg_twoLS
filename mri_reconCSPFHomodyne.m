@@ -226,8 +226,8 @@ function [recon, objValues] =  mri_reconCSPFHomodyne(kData, sFSR, varargin )
 
     case 'pdhg_bothls'
       objF = @(x) f_tilde( proxf_tilde(x) ) + g_tilde( proxf_tilde(x) );
-      [xStar,objValues,alphas] = primal_dual_dr_aoi_newls( x0, @S_pdDR, 'N', N, ...
-        'objFunction', objF, 'verbose', true, 'printEvery', 1, 'doLineSearchTest', true );
+      [xStar,objValues,alphas] = gPDHG_wls( x0, @proxf_tilde, @proxgConj,@ftilde,@gtilde, N, ...
+        1, @applyA, @applyB, gamma );
     otherwise
       error( 'Unrecognized algorithm' );
   end
