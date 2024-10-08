@@ -3,7 +3,7 @@ function run_test_prob_tv_newls()
 im = imread('cameraman.tif');
 im = double(im) ./ 255;
 
-im = imresize(im, 0.25);
+im = imresize(im, 0.2);
 
 noise = 0.08*randn(size(im));
 noised_im = im + noise;
@@ -30,7 +30,7 @@ sizex = size(computeGradient(noised_im));
 
 
 % lambdas = linspace(0.001, 5, 100);
-lambdas = 2.^(-6:6);
+lambdas = 2.^(-6:2);
 for lambda_idx = 1:numel(lambdas)
     x0 = zeros([n + m, 1]);
     lambda = lambdas(lambda_idx);
@@ -44,6 +44,8 @@ for lambda_idx = 1:numel(lambdas)
     obja = @(x) f(x) + ga(x);
 
     fflat = @(x) 0.5*norm(x - noised_im(:))^2;
+
+    objaf = @(x) fflat(x) + g(resize(x, sizex));
 
     delta_y = @(x) deltay(x);
     ftilde = @(x) fflat(x(1:n)) + delta_y(x(n+1: end));
@@ -68,21 +70,23 @@ for lambda_idx = 1:numel(lambdas)
     for gamma_idx = 1:numel(gamma_vals)
         disp(gamma_idx);
         gamma = gamma_vals(gamma_idx);
-        maxIter = 1000;
-        [xStar, iters, alphas, objVals] = primal_dual_dr_aoi_newls(x0, ...
-            proxftilde,proxgconj, ftilde, gtilde, maxIter, theta, A, B, gamma);
-    
+        maxIter = 50;
+        % [xStar, iters, alphas, objVals_newls] = primal_dual_dr_aoi_newls(x0, ...
+        %     proxftilde,proxgconj, ftilde, gtilde, maxIter, theta, A, B, gamma);
+        
+        [xStar, objVals_newls, alphas] = gPDHG_wls(x0, proxftilde,proxgconj, ftilde, ...
+                        gtilde, maxIter, theta, A, B, gamma);
         xend = proxf_flat(xStar(1:n), gamma);
-        final_obj = obja(xend);
+        final_obj = objaf(xend);
         if final_obj < best_obj
             best_idx = gamma_idx;
             xBest = xend;
-            bestObjs = objVals;
+            bestObjs = objVals_newls;
             best_obj = final_obj;
         end
     end
     
-    figure; imshowscale(resize(xBest, size(noised_im))); title(lstr)
+    figure; imshowscale(resize(xBest, size(noised_im)),5); title(lstr)
     
     figure; plot(bestObjs); title(lstr);
     disp(best_idx);
