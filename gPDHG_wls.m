@@ -1,6 +1,34 @@
 function [xStar, objVals, alphasUsed] = gPDHG_wls(x0,proxf,proxgconj, f, g, maxIter, theta, A, B, gamma)
 % implements our new generalized PDHG with line search
 
+n = size(x0, 1);
+
+if isnumeric(A)
+    if ~isnumeric(B)
+        disp('both A, B must be numeric or functions');
+        return
+    end
+    applyA = @(x) A*x;
+    applyAt = @(x) A'*x;
+    applyB = @(x) B*x;
+    applyBt = @(x) B'*x;
+else
+    applyA = @(x) A(x, 'notransp');
+    applyAt = @(x) A(x, 'transp');
+    applyB = @(x) B(x, 'notransp');
+    applyBt = @(x) B(x, 'transp');
+
+end
+m = size(applyA(x0), 1);
+function out = applyAB( in, op )
+    if nargin < 2 || strcmp( op, 'notransp' )
+      out = applyA( in(1:n) ) + applyB( in(n+1:end) );
+    else
+      out = zeros( n + nMask, 1 );
+      out(1:n) = applyA( in, 'transp' );
+      out(n+1:end) = applyB( in, 'transp' );
+    end
+end
 
 doLineSearch = true;
 doLineSearchTest = true;
