@@ -1,34 +1,35 @@
-function [xStar, objVals, alphasUsed] = gPDHG_wls(x0,proxf,proxgconj, f, g, maxIter, theta, A, B, gamma)
+function [xStar, objVals, alphasUsed] = gPDHG_wls(x0,proxf,proxgconj, f, g, maxIter, theta, A, B, gamma, n, m)
 % implements our new generalized PDHG with line search
 
-n = size(x0, 1);
 
-if isnumeric(A)
-    if ~isnumeric(B)
-        disp('both A, B must be numeric or functions');
-        return
-    end
+if isnumeric(A) && isnumeric(B)
     applyA = @(x) A*x;
     applyAt = @(x) A'*x;
     applyB = @(x) B*x;
     applyBt = @(x) B'*x;
-else
+elseif isa(A, 'function_handle') && isa(B, 'function_handle')
     applyA = @(x) A(x, 'notransp');
     applyAt = @(x) A(x, 'transp');
     applyB = @(x) B(x, 'notransp');
     applyBt = @(x) B(x, 'transp');
 
+else
+    disp('both A, B must be numeric or functions');
+    return
 end
-m = size(applyA(x0), 1);
+
+
+
 function out = applyAB( in, op )
     if nargin < 2 || strcmp( op, 'notransp' )
       out = applyA( in(1:n) ) + applyB( in(n+1:end) );
     else
-      out = zeros( n + nMask, 1 );
-      out(1:n) = applyA( in, 'transp' );
-      out(n+1:end) = applyB( in, 'transp' );
+      out = zeros( n + m, 1 );
+      out(1:n) = applyAt( in );
+      out(n+1:end) = applyBt( in );
     end
 end
+
 
 doLineSearch = true;
 doLineSearchTest = true;
@@ -61,8 +62,8 @@ Rg = @(phi) 2*proxgconj(phi, 1/gamma) - phi;
 % S = @(phi) Rgconj(Rf(phi));
 S_old = @(phi) -gamma * Rg( (1/gamma) * Rf(phi) );
 
-S = @(phi, tauk, thetak) applyS(phi, proxf, proxgconj, tauk, thetak, theta, A, B);
-S2 = @(phi, tauk, thetak, yk) applyS2(phi, proxf, proxgconj, yk, tauk, thetak, theta, A, B);
+S = @(phi, tauk, thetak) applyS(phi, proxf, proxgconj, tauk, thetak, theta, applyAt, @applyAB);
+S2 = @(phi, tauk, thetak, yk) applyS2(phi, proxf, proxgconj, yk, tauk, thetak, theta, applyAt, @applyAB);
 
 tau0 = 1;
 theta0 = 1;
@@ -87,7 +88,7 @@ for optIter = 1:maxIter
 
     if doLineSearch == true
 
-        parfor alphaIndx = 1 : nAlphas
+        for alphaIndx = 1 : nAlphas
             alpha = alphas( alphaIndx );
             xAlpha = xk + alpha * rk;
             xs{alphaIndx} = xAlpha;
