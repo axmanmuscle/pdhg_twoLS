@@ -55,15 +55,7 @@ k = ceil( -log( alpha0 / alpha_bar ) / log( alpha_change ) );
 alphas = alpha0 .* ( alpha_change.^(0:k) );
 alphas(end) = alpha_bar;
 
-Rf = @(phi) 2*proxf(phi, gamma) - phi;
-% Rgconj = @(phi) 2*proxgconj(phi, gamma) - phi;
-Rg = @(phi) 2*proxgconj(phi, 1/gamma) - phi;
-
-% S = @(phi) Rgconj(Rf(phi));
-S_old = @(phi) -gamma * Rg( (1/gamma) * Rf(phi) );
-
-S = @(phi, tauk, thetak) applyS(phi, proxf, proxgconj, tauk, thetak, theta, applyAt, @applyAB);
-S2 = @(phi, tauk, thetak, yk) applyS2(phi, proxf, proxgconj, yk, tauk, thetak, theta, applyAt, @applyAB);
+S = @(phi, tauk, thetak, yk) applyS(phi, proxf, proxgconj, yk, tauk, thetak, theta, applyAt, @applyAB);
 
 tau0 = 1;
 theta0 = 1;
@@ -78,7 +70,7 @@ normRks = zeros( nAlphas, 1 );
 xs = cell( 1, nAlphas );
 rks = cell( 1, nAlphas );
 
-[sxk, tauk, thetak] = S(xk, tauk, thetak);
+[sxk, tauk, thetak, yk] = S(xk, tauk, thetak, yk);
 rk = sxk - xk;
 
 normRk = sqrt(real(dotP(rk, rk)));
@@ -92,8 +84,8 @@ for optIter = 1:maxIter
             alpha = alphas( alphaIndx );
             xAlpha = xk + alpha * rk;
             xs{alphaIndx} = xAlpha;
-            [sxAlpha, ~, ~] = S(xAlpha, tauk, thetak);
-            rkAlpha = sxAlpha - xAlpha;   %#ok<PFBNS>
+            [sxAlpha, ~, ~, ~] = S(xAlpha, tauk, thetak, yk);
+            rkAlpha = sxAlpha - xAlpha;
             rks{alphaIndx} = rkAlpha;
             normRks( alphaIndx ) = sqrt( real( dotP( rkAlpha, rkAlpha ) ) );
         end
@@ -110,7 +102,7 @@ for optIter = 1:maxIter
 
         alphaUsed = alpha_bar;
         xk = xk + alpha_bar * rk;
-        [sx, tauk, thetak] = S(xk, tauk, thetak);
+        [sx, tauk, thetak, yk] = S(xk, tauk, thetak, yk);
         rk = sx - xk;
     end
 
