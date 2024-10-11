@@ -194,17 +194,17 @@ function [recon, objValues] =  mri_reconCSPFHomodyne(kData, sFSR, varargin )
   switch alg
 
     case 'douglasRachford'
-      [xStar,objValuesDR] = douglasRachford( x0, @proxf_tilde, @proxg_tilde, gamma, 'N', 200, ...
+      [xStar,objValues] = douglasRachford( x0, @proxf_tilde, @proxg_tilde, gamma, 'N', N, ...
         'f', @f_tilde, 'g', @g_tilde, 'verbose', true, 'printEvery', printEvery );   %#ok<ASGLU>
 
     case 'douglasRachford_avgOp'
-      objF = @(x) f( proxf_tilde(x) ) + g( proxf_tilde(x) );
-      [xStar] = avgOpIter( x0, @S_DR, 'alpha', 0.5, 'N', 1000, ...
+      objF = @(x) f_tilde( proxf_tilde(x) ) + g_tilde( proxf_tilde(x) );
+      [xStar, objValues] = avgOpIter( x0, @S_DR, 'alpha', 0.5, 'N', N, ...
         'objFunction', objF, 'verbose', true, 'printEvery', printEvery );
 
     case 'pdhg'
       tau = gamma;
-      if numel( normA ) == 0, normA = powerIteration( @applyA, rand( size( k0 ) ) ); end
+      normA = powerIteration( @applyA, rand( size( k0 ) ) );
       [kStar,objValues] = pdhg( k0, @proxf, @proxgConj, tau, 'A', @applyA, 'normA', normA, 'sigma', gamma, ...
         'N', N, 'f', @f, 'g', @g, 'verbose', true, 'printEvery', printEvery );
       xStar = zeros( size( x0 ) );
@@ -212,7 +212,7 @@ function [recon, objValues] =  mri_reconCSPFHomodyne(kData, sFSR, varargin )
 
     case 'primalDualDR'
       [xStar, objValues] = primalDualDR( x0, @proxf_tilde, @proxg_tildeConj, gamma, 'N', N, ...
-        'f', @f_tilde, 'g', @g_tilde, 'verbose', true, 'printEvery', printEvery );   %#ok<ASGLU>
+        'f', @f_tilde, 'g', @g_tilde, 'verbose', true);   %#ok<ASGLU>
 
     case 'primalDualDR_avgOp'
       pddrAvgOpObjF = @(x) g_tilde( proxf_tilde( x ) );
@@ -224,10 +224,10 @@ function [recon, objValues] =  mri_reconCSPFHomodyne(kData, sFSR, varargin )
       [xStar,objValues,alphas] = avgOpIter_wLS( x0, @S_pdDR, 'N', N, ...
         'objFunction', objF, 'verbose', true, 'printEvery', 1, 'doLineSearchTest', true );   %#ok<ASGLU>
 
-    case 'pdhg_bothls'
+    case 'gpdhg'
       objF = @(x) f_tilde( proxf_tilde(x) ) + g_tilde( proxf_tilde(x) );
-      [xStar,objValues,alphas] = gPDHG_wls( x0, @proxf_tilde, @proxgConj,@ftilde,@gtilde, N, ...
-        1, @applyA, @applyB, @applyAB, gamma );
+      [xStar,objValues,alphas] = gPDHG_wls( x0, @proxf_tilde, @proxgConj,@f_tilde,@g_tilde, N, ...
+        1, @applyA, @applyB, gamma, nUnknown, nMask );
     otherwise
       error( 'Unrecognized algorithm' );
   end

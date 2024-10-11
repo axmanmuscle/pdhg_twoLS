@@ -63,12 +63,15 @@ theta0 = 1;
 xk = x0;
 tauk = tau0;
 thetak = theta0;
-yk = zeros(size(A, 1), 1);
+yk = zeros(m, 1);
 
 nAlphas = numel( alphas );
 normRks = zeros( nAlphas, 1 );
 xs = cell( 1, nAlphas );
 rks = cell( 1, nAlphas );
+tauks = cell( 1, nAlphas );
+thetaks = cell( 1, nAlphas );
+yks = cell( 1, nAlphas );
 
 [sxk, tauk, thetak, yk] = S(xk, tauk, thetak, yk);
 rk = sxk - xk;
@@ -84,9 +87,12 @@ for optIter = 1:maxIter
             alpha = alphas( alphaIndx );
             xAlpha = xk + alpha * rk;
             xs{alphaIndx} = xAlpha;
-            [sxAlpha, ~, ~, ~] = S(xAlpha, tauk, thetak, yk);
+            [sxAlpha, taukAlpha, thetakAlpha, ykAlpha] = S(xAlpha, tauk, thetak, yk);
             rkAlpha = sxAlpha - xAlpha;
             rks{alphaIndx} = rkAlpha;
+            tauks{alphaIndx} = taukAlpha;
+            thetaks{alphaIndx} = thetakAlpha;
+            yks{alphaIndx} = ykAlpha;
             normRks( alphaIndx ) = sqrt( real( dotP( rkAlpha, rkAlpha ) ) );
         end
 
@@ -97,6 +103,9 @@ for optIter = 1:maxIter
         alphaUsed = alphas( bestAlphaIndx );
         xk = xs{ bestAlphaIndx };
         rk = rks{ bestAlphaIndx };
+        tauk = tauks{ bestAlphaIndx };
+        thetak = thetaks{ bestAlphaIndx };
+        yk = yks{ bestAlphaIndx };
 
     else
 

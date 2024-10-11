@@ -22,6 +22,9 @@ while ~accept
 
     sig = theta / taukp1;
     yhat = sig*AB(ykp1);
+    if size(yk) ~= size(yhat)
+        yk = reshape(yk, size(yhat));
+    end
 
     left_term = sqrt(beta)*taukp1 * norm(At(yhat) - At(yk));
     right_term = delta * norm(yhat - yk);
