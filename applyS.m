@@ -1,4 +1,4 @@
-function [xOut, tau, thetaOut, yOut] = applyS(xIn, pf, pgstar, yk, tauk, thetak, theta, At, AB)
+function [xOut, tau, thetaOut, yOut, xk] = applyS(xIn, pf, pgstar, yk, xkm1, tauk, thetak, theta, At, AB)
 
 pgtilde = @(x, t, tauk) x - tauk * AB(pgstar(t*AB(x), t), 'transp');
 Rf = @(phi, t) 2*pf(phi, t) - phi;
@@ -11,14 +11,16 @@ beta = 0.8;
 
 xhat = Rf(xIn, tauk);
 
-tau_hat = rand;
-tau_range = tauk * (sqrt(1 + thetak) - 1);
-taukp1 = tauk + tau_hat*tau_range;
+% tau_hat = rand;
+% tau_range = tauk * (sqrt(1 + thetak) - 1);
+% taukp1 = tauk + tau_hat*tau_range;
+taukp1 = tauk*(sqrt(1 + thetak));
 
 accept = false;
 while ~accept
     thetaOut = taukp1 / tauk;
-    ykp1 = pgtilde(xhat, beta*taukp1, tauk);
+    xbar = xhat; %+ thetaOut*(xhat - xIn);
+    ykp1 = pgtilde(xbar, beta*taukp1, tauk);
 
     sig = theta / taukp1;
     yhat = sig*AB(ykp1);
@@ -40,6 +42,8 @@ tau = taukp1;
 xOut = 2*(xhat - ykp1) - xhat;
 xOut = -1 * xOut;
 yOut = yhat;
+
+xk = xhat;
 
 end
 

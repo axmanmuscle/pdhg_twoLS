@@ -55,7 +55,7 @@ k = ceil( -log( alpha0 / alpha_bar ) / log( alpha_change ) );
 alphas = alpha0 .* ( alpha_change.^(0:k) );
 alphas(end) = alpha_bar;
 
-S = @(phi, tauk, thetak, yk) applyS(phi, proxf, proxgconj, yk, tauk, thetak, theta, applyAt, @applyAB);
+S = @(phi, tauk, thetak, yk, xkm1) applyS(phi, proxf, proxgconj, yk, xkm1, tauk, thetak, theta, applyAt, @applyAB);
 
 tau0 = 1;
 theta0 = 1;
@@ -72,8 +72,9 @@ rks = cell( 1, nAlphas );
 tauks = cell( 1, nAlphas );
 thetaks = cell( 1, nAlphas );
 yks = cell( 1, nAlphas );
+xls = cell( 1, nAlphas );
 
-[sxk, tauk, thetak, yk] = S(xk, tauk, thetak, yk);
+[sxk, tauk, thetak, yk, xlast] = S(xk, tauk, thetak, yk, x0);
 rk = sxk - xk;
 
 normRk = sqrt(real(dotP(rk, rk)));
@@ -87,12 +88,14 @@ for optIter = 1:maxIter
             alpha = alphas( alphaIndx );
             xAlpha = xk + alpha * rk;
             xs{alphaIndx} = xAlpha;
-            [sxAlpha, taukAlpha, thetakAlpha, ykAlpha] = S(xAlpha, tauk, thetak, yk);
+            [sxAlpha, taukAlpha, thetakAlpha, ykAlpha, xlastAlpha] = S(xAlpha, tauk, thetak, yk, xlast);
             rkAlpha = sxAlpha - xAlpha;
             rks{alphaIndx} = rkAlpha;
             tauks{alphaIndx} = taukAlpha;
             thetaks{alphaIndx} = thetakAlpha;
             yks{alphaIndx} = ykAlpha;
+            xls{alphaIndx} = xlastAlpha;
+            
             normRks( alphaIndx ) = sqrt( real( dotP( rkAlpha, rkAlpha ) ) );
         end
 
@@ -106,12 +109,13 @@ for optIter = 1:maxIter
         tauk = tauks{ bestAlphaIndx };
         thetak = thetaks{ bestAlphaIndx };
         yk = yks{ bestAlphaIndx };
+        xlast = xls{ bestAlphaIndx };
 
     else
 
         alphaUsed = alpha_bar;
         xk = xk + alpha_bar * rk;
-        [sx, tauk, thetak, yk] = S(xk, tauk, thetak, yk);
+        [sx, tauk, thetak, yk, xlast] = S(xk, tauk, thetak, yk, xlast);
         rk = sx - xk;
     end
 

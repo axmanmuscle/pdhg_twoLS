@@ -10,8 +10,8 @@ function run_test_prob_dr()
 %%% need to save out obj value vs. iteration count for every method
 %%% in primal dual dr aoi wls this is "gamma"
 %%% omfg
-m = 300;
-n = 75;
+m = 9;
+n = 3;
 b = 8*ones([n, 1]);
 eps = 0.2;
 
@@ -63,10 +63,10 @@ x0_dr = 50*randn([n 1]);
 
 % [xStar8, newiters, taus] = pddr_malitsky_test(A);
 
-[xStar9, iters] = aoi_newls(x0,pf,pgstar, theta, A, B);
-[xStar10, ls_iters, alphas, objVals] = primal_dual_dr_aoi_newls(x0,pf,pgstar, ftilde, gtilde, 100, theta, A, B, 1);
+[xStar9, iters] = aoi_newls(x0,pf,pgstar, theta, A, B, n, m);
+% [xStar10, ls_iters, alphas, objVals] = primal_dual_dr_aoi_newls(x0,pf,pgstar, ftilde, gtilde, 100, theta, A, B, 1);
 
-[xStar11, objVals_new, alphas_new] = gPDHG_wls(x0,pf,pgstar, ftilde, gtilde, 100, theta, A, B, 1);
+[xStar11, objVals_new, alphas_new] = gPDHG_wls(x0,pf,pgstar, ftilde, gtilde, 100, theta, A, B, 1, n, m);
 
 pfnew = @(x, t) proxF(x(1:n), b, eps);
 % [xStarpdhg, objvals, reldiffs] = pdhg(x0(1:3), pfnew, pgstar, tau, 'A', A, ...
