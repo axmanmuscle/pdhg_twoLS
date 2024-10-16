@@ -1,10 +1,6 @@
 function [xOut, tau, thetaOut, yOut, xk] = applyS_rewrite(xIn, pf, pgstar, yk, xkm1, tauk, thetak, theta, At, AB)
-% we need to write a version of applyS that is much less confusing to do
-% some error checking on
-% so instead of calling the reflected operators just call the original prox
-% operators in their original order to line up to the malitsky line search
-% better
-
+%%% need to rewrite this so it's more understandable
+%%% bro do i do this or write the paper i dont fucking KNOWWWW
 pgtilde = @(x, t, tauk) x - tauk * AB(pgstar(t*AB(x), t), 'transp');
 Rf = @(phi, t) 2*pf(phi, t) - phi;
 
