@@ -3,7 +3,7 @@ function run_test_prob_tv_newls()
 im = imread('cameraman.tif');
 im = double(im) ./ 255;
 
-im = imresize(im, 0.05);
+im = imresize(im, 0.1);
 
 noise = 0.08*randn(size(im));
 noised_im = im + noise;
@@ -73,6 +73,8 @@ for lambda_idx = 1:numel(lambdas)
         maxIter = 50;
         % [xStar, iters, alphas, objVals_newls] = primal_dual_dr_aoi_newls(x0, ...
         %     proxftilde,proxgconj, ftilde, gtilde, maxIter, theta, A, B, gamma);
+        [xStar_new, objVals_newls_new, alphas_new] = aoi_newapplyS(x0, proxftilde,proxgconj, ftilde, ...
+                        gtilde, maxIter, theta, A, B, gamma, n, m);
         
         [xStar, objVals_newls, alphas] = gPDHG_wls(x0, proxftilde,proxgconj, ftilde, ...
                         gtilde, maxIter, theta, A, B, gamma, n, m);
