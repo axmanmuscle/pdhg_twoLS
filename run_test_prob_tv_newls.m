@@ -3,9 +3,9 @@ function run_test_prob_tv_newls()
 im = imread('cameraman.tif');
 im = double(im) ./ 255;
 
-im = imresize(im, 0.1);
+im = imresize(im, 0.18);
 
-noise = 0.08*randn(size(im));
+noise = 0.02*randn(size(im));
 noised_im = im + noise;
 
 n = size(noised_im(:), 1);
@@ -24,6 +24,8 @@ G = A*A';
 Bt = chol((1/theta)*eye(size(G)) - G);
 B = Bt';
 m = size(B, 1);
+
+clear G Bt;
 
 sizex = size(computeGradient(noised_im));
 % then write the functions for the line search
@@ -62,6 +64,13 @@ for lambda_idx = 1:numel(lambdas)
 
     proxftilde = @(x, t) [proxf_flat(x(1:n), t); zeros(size(x(n+1:end)))];
     objtilde = @(x) ftilde(proxftilde(x, 1)) + gtilde(proxftilde(x, 1));
+
+
+    proxgtilde = @(x, t) x - t*[A';B']*proxgconj((theta/t)*(A*x(1:n) + B*x(n+1:end)), theta/t);
+    proxgtildeconj = @(x, t) x - proxgtilde(x, t);
+    Rftilde = @(x, t) 2*resize(proxftilde(x,t), size(x)) - x;
+    Rgtilde = @(x, t) 2*proxgtilde(x,t) - x;
+    Rgtildeconj = @(x, t) 2*proxgtildeconj(x, t) - x;
     
     best_idx = 0;
     best_obj = Inf;
@@ -78,6 +87,12 @@ for lambda_idx = 1:numel(lambdas)
         
         [xStar, objVals_newls, alphas] = gPDHG_wls(x0, proxftilde,proxgconj, ftilde, ...
                         gtilde, maxIter, theta, A, B, gamma, n, m);
+
+        S_pdDR = @(in) -gamma * Rgtildeconj( Rftilde( in, gamma ) / gamma , 1/gamma );
+        
+        [xStar_aoi,objVals_pdhgaoi,alphas_aoi] = avgOpIter_wLS( x0(:), S_pdDR, 'N', maxIter, ...
+        'objFunction', objtilde, 'verbose', true, 'printEvery', 1, 'doLineSearchTest', true );
+
         xend = proxf_flat(xStar(1:n), gamma);
         final_obj = objaf(xend);
         if final_obj < best_obj

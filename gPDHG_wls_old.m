@@ -1,4 +1,4 @@
-function [xStar, objVals, alphasUsed] = aoi_newapplyS(x0,proxf,proxgconj, f, g, maxIter, theta, A, B, gamma, n, m)
+function [xStar, objVals, alphasUsed] = gPDHG_wls_old(x0,proxf,proxgconj, f, g, maxIter, theta, A, B, gamma, n, m)
 % implements our new generalized PDHG with line search
 
 
@@ -30,6 +30,9 @@ function out = applyAB( in, op )
     end
 end
 
+
+doLineSearch = true;
+doLineSearchTest = true;
 if nargout > 1
     objVals = zeros( maxIter, 1 );
 end
@@ -52,7 +55,7 @@ k = ceil( -log( alpha0 / alpha_bar ) / log( alpha_change ) );
 alphas = alpha0 .* ( alpha_change.^(0:k) );
 alphas(end) = alpha_bar;
 
-S = @(xIn, zIn, tauk, thetak) applyS_pdhgwLS_op(xIn, zIn, proxf, proxgconj, tauk, thetak, theta, applyA, applyAt, @applyAB);
+S = @(phi, tauk, thetak, yk, xkm1) applyS(phi, proxf, proxgconj, yk, xkm1, tauk, thetak, theta, applyAt, @applyAB);
 
 tau0 = 1;
 theta0 = 1;
@@ -60,7 +63,7 @@ theta0 = 1;
 xk = x0;
 tauk = tau0;
 thetak = theta0;
-zk = zeros([m 1]);
+yk = zeros(m, 1);
 
 nAlphas = numel( alphas );
 normRks = zeros( nAlphas, 1 );
@@ -68,10 +71,10 @@ xs = cell( 1, nAlphas );
 rks = cell( 1, nAlphas );
 tauks = cell( 1, nAlphas );
 thetaks = cell( 1, nAlphas );
-xks = cell( 1, nAlphas );
-zks = cell( 1, nAlphas );
+yks = cell( 1, nAlphas );
+xls = cell( 1, nAlphas );
 
-[sxk, xOut, zOut, tauk, thetak] = S(xk(1:n), zk, tauk, thetak);
+[sxk, tauk, thetak, yk, xlast] = S(xk, tauk, thetak, yk, x0);
 rk = sxk - xk;
 
 normRk = sqrt(real(dotP(rk, rk)));
@@ -85,13 +88,13 @@ for optIter = 1:maxIter
             alpha = alphas( alphaIndx );
             xAlpha = xk + alpha * rk;
             xs{alphaIndx} = xAlpha;
-            [sxAlpha, xOutAlpha, zOutAlpha, taukAlpha, thetakAlpha] = S(xOut, zOut, tauk, thetak);
+            [sxAlpha, taukAlpha, thetakAlpha, ykAlpha, xlastAlpha] = S(xAlpha, tauk, thetak, yk, xlast);
             rkAlpha = sxAlpha - xAlpha;
             rks{alphaIndx} = rkAlpha;
             tauks{alphaIndx} = taukAlpha;
             thetaks{alphaIndx} = thetakAlpha;
-            xks{alphaIndx} = xOutAlpha;
-            zks{alphaIndx} = zOutAlpha;
+            yks{alphaIndx} = ykAlpha;
+            xls{alphaIndx} = xlastAlpha;
             
             normRks( alphaIndx ) = sqrt( real( dotP( rkAlpha, rkAlpha ) ) );
         end
@@ -105,14 +108,14 @@ for optIter = 1:maxIter
         rk = rks{ bestAlphaIndx };
         tauk = tauks{ bestAlphaIndx };
         thetak = thetaks{ bestAlphaIndx };
-        xOut = xks{ bestAlphaIndx };
-        zOut = zks{ bestAlphaIndx };
+        yk = yks{ bestAlphaIndx };
+        xlast = xls{ bestAlphaIndx };
 
     else
 
         alphaUsed = alpha_bar;
         xk = xk + alpha_bar * rk;
-        [sx, xOut, zOut, tauk, thetak] = S(xk, zk, tauk, thetak);
+        [sx, tauk, thetak, yk, xlast] = S(xk, tauk, thetak, yk, xlast);
         rk = sx - xk;
     end
 
