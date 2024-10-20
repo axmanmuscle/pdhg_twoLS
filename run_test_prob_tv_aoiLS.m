@@ -45,6 +45,7 @@ for lambda_idx = 1:numel(lambdas)
 
     fflat = @(x) 0.5*norm(x - noised_im(:))^2;
 
+    objaf = @(x) fflat(x) + ga(x);
     delta_y = @(x) deltay(x);
     ftilde = @(x) fflat(x(1:n)) + delta_y(x(n+1: end));
     gtilde = @(x) g( resize(A*x(1:n) + B*(x(n+1:end)), sizex ) );
@@ -78,15 +79,22 @@ for lambda_idx = 1:numel(lambdas)
         gamma = gamma_vals(gamma_idx);
         S_pdDR = @(in) -gamma * Rgtildeconj( Rftilde( in, gamma ) / gamma , 1/gamma );
         
-        [xStar,objValues,alphas] = avgOpIter_wLS( x0(:), S_pdDR, 'N', 1000, ...
+        [xStar,objVals_pdhgaoi,alphas] = avgOpIter_wLS( x0(:), S_pdDR, 'N', 300, ...
         'objFunction', objtilde, 'verbose', true, 'printEvery', 1, 'doLineSearchTest', true );
     
         xend = proxf_flat(xStar(1:n), gamma);
-        final_obj = obja(xend);
+        final_obj = objaf(xend);
+
+        fstr = sprintf('/home/alex/Documents/MATLAB/tvRunData/pdhgAOIls/lambda_%d_gamma_%d', lambda_idx, gamma_idx);
+        objStr = sprintf('%s_obj.mat', fstr);
+        xStr = sprintf('%s_x.mat', fstr);
+
+        save(objStr, "objVals_pdhgaoi");
+        save(xStr, "xend");
         if final_obj < best_obj
             best_idx = gamma_idx;
             xBest = xend;
-            bestObjs = objVals_pdhg;
+            bestObjs = objVals_pdhgaoi;
             best_obj = final_obj;
         end
     end
