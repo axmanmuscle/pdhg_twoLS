@@ -14,7 +14,7 @@ n = size(noised_im(:), 1);
 figure; imshowscale(noised_im, 5);
 
 % info for saving variables
-dirStr = '/home/users/alex/Documents/MATLAB/tvRunData';
+dirStr = '/home/users/alex/Documents/MATLAB/tvRunData_new1020';
 
 % compute stuff for PDDR line searches
 
@@ -22,7 +22,6 @@ normA = powerIteration(@computeGradient, noised_im);
 A = makeTVMx(size(noised_im));
 ta = 1.1 * normA^2;
 theta = 1/ta;
-tau = 0.1;
 G = A*A';
 Bt = chol((1/theta)*eye(size(G)) - G);
 B = Bt';
@@ -80,31 +79,27 @@ for lambda_idx = 1:numel(lambdas)
     
     gamma_vals = 10.^(-8:4);
     for gamma_idx = 1:numel(gamma_vals)
+        z0 = zeros([n 1]);
         disp(gamma_idx);
         gamma = gamma_vals(gamma_idx);
         maxIter = 50;
         % [xStar, iters, alphas, objVals_newls] = primal_dual_dr_aoi_newls(x0, ...
         %     proxftilde,proxgconj, ftilde, gtilde, maxIter, theta, A, B, gamma);
         
-        [xStar, objVals_newls, alphas] = gPDHG_wls(x0, proxf,proxgconj, fflat, ...
+        [xStar_new, objVals_newls_new, alphas_new] = gPDHG_wls(z0, proxf,proxgconj, fflat, ...
                         g, maxIter, theta, A, B, gamma);
-        xend = proxf_flat(xStar(1:n), gamma);
-        final_obj = objaf(xend);
-        if final_obj < best_obj
-            best_idx = gamma_idx;
-            xBest = xend;
-            bestObjs = objVals_newls;
-            best_obj = final_obj;
-        end
+
+        [xStar_old, objVals_newls_old, alphas] = gPDHG_wls_old(x0, proxftilde,proxgconj, ftilde, ...
+                        gtilde, maxIter, theta, A, B, gamma, n, m);
 
         S_pdDR = @(in) -gamma * Rgtildeconj( Rftilde( in, gamma ) / gamma , 1/gamma );
         
         [xStar_aoi,objVals_pdhgaoi,alphas_aoi] = avgOpIter_wLS( x0(:), S_pdDR, 'N', maxIter, ...
         'objFunction', objtilde, 'verbose', true, 'printEvery', 1, 'doLineSearchTest', true );
 
-        fstr_new = sprintf('%s/bothLs/lambda_%d_gamma_%d', lambda_idx, gamma_idx);
-        fstr_old = sprintf('%s/oldLs/lambda_%d_gamma_%d', lambda_idx, gamma_idx);
-        fstr_aoi = sprintf('%s/aoiLs/lambda_%d_gamma_%d', lambda_idx, gamma_idx);
+        fstr_new = sprintf('%s/bothLs/lambda_%d_gamma_%d', dirStr, lambda_idx, gamma_idx);
+        fstr_old = sprintf('%s/oldLs/lambda_%d_gamma_%d', dirStr, lambda_idx, gamma_idx);
+        fstr_aoi = sprintf('%s/aoiLs/lambda_%d_gamma_%d', dirStr, lambda_idx, gamma_idx);
 
         objStr_new = sprintf('%s_obj.mat', fstr_new);
         xStr_new = sprintf('%s_x.mat', fstr_new);
@@ -113,12 +108,16 @@ for lambda_idx = 1:numel(lambdas)
         objStr_aoi = sprintf('%s_obj.mat', fstr_aoi);
         xStr_aoi = sprintf('%s_x.mat', fstr_aoi);
 
-        save(objStr_new, "objVals_newls_new");
-        save(xStr_new, "xStar_new");
-        save(objStr_old, "objVals_newls");
-        save(xStr_old, "xStar");
-        save(objStr_aoi, "objVals_pdhgaoi");
-        save(xStr_aoi, "xStar_aoi");
+        %%% parfor only options
+        s1 = struct("objVals_newls_new", objVals_newls_new, "xStar_new", xStar_new);
+        s2 = struct("objVals_newls_old", objVals_newls_old, "xStar_old", xStar_old);
+        s3 = struct("objVals_pdhgaoi", objVals_pdhgaoi, "xStar_aoi", xStar_aoi);
+        save(objStr_new, "objVals_newls_new","-fromstruct",s1);
+        save(xStr_new, "xStar_new","-fromstruct",s1);
+        save(objStr_old, "objVals_newls_old","-fromstruct",s2);
+        save(xStr_old, "xStar_old","-fromstruct",s2);
+        save(objStr_aoi, "objVals_pdhgaoi","-fromstruct",s3);
+        save(xStr_aoi, "xStar_aoi","-fromstruct",s3);
 
         % xend = proxf_flat(xStar(1:n), gamma);
         % final_obj = objaf(xend);
