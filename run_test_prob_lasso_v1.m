@@ -179,7 +179,7 @@ aoi_step2 = (1 - alpha)*zold1 + alpha*sx1;
 tau0 = 1;
 theta0 = 1;
 [sx2, xOut, zOut, tauk, thetak] = applyS_pdhgwLS(x0_dr, z0, proxf, proxgconj, gamma/0.8, 0, alpha, A, B);
-xaoi_pdhg = (1 - alpha)*x0 + alpha*sx;
+xaoi_pdhg_new = (1 - alpha)*x0 + alpha*sx;
 
 %%% maybe no way to verify that this actually works but okay lmao
 

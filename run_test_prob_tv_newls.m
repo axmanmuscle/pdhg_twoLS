@@ -74,8 +74,8 @@ for lambda_idx = 1:numel(lambdas)
         % [xStar, iters, alphas, objVals_newls] = primal_dual_dr_aoi_newls(x0, ...
         %     proxftilde,proxgconj, ftilde, gtilde, maxIter, theta, A, B, gamma);
         
-        [xStar, objVals_newls, alphas] = gPDHG_wls(x0, proxftilde,proxgconj, ftilde, ...
-                        gtilde, maxIter, theta, A, B, gamma, n, m);
+        [xStar, objVals_newls, alphas] = gPDHG_wls(x0, proxf,proxgconj, fflat, ...
+                        g, maxIter, theta, A, B, gamma);
         xend = proxf_flat(xStar(1:n), gamma);
         final_obj = objaf(xend);
         if final_obj < best_obj
