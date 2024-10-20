@@ -28,21 +28,22 @@ function [xStar, objVals, alphasUsed] = gPDHG_wls( z0, proxf, proxgconj, f, g, t
     applyB = @(x) B(x, 'notransp');
     applyBt = @(x) B(x, 'transp');
 
-    if numel( y0 ) > 0
-      m = numel( y0 );
-    else
-      Az0 = applyA( z0 );
-      m = numel( Az0 );
-    end
-    n = numel( z0 );
-  
+
+
   else
       disp('both A, B must be numeric or functions');
       return
   end
+  if numel( y0 ) > 0
+      m = numel( y0 );
+  else
+      Az0 = applyA( z0 );
+      m = numel( Az0 );
+  end
+  n = numel( z0 );
 
   if numel( y0 ) > 0
-    x0 = [ z0(:); y0(:); ];
+      x0 = [ z0(:); y0(:); ];
   else
     x0 = [ z0(:); Az0(:); ];
   end
@@ -68,8 +69,8 @@ function [xStar, objVals, alphasUsed] = gPDHG_wls( z0, proxf, proxgconj, f, g, t
   
   objFun = @(x) f(proxf(x, gamma)) + g(applyA(proxf(x, gamma)));
   
-  doLineSearch = false;
-  doLineSearchTest = false;
+  doLineSearch = true;
+  doLineSearchTest = true;
   
   %%% parameters
   alpha_bar = 0.5; % alpha_bar
@@ -172,7 +173,7 @@ function [xStar, objVals, alphasUsed] = gPDHG_wls( z0, proxf, proxgconj, f, g, t
       fprintf('iter: %d   objVal: %d   res: %d  alpha: %d\n', optIter, objVals(optIter), norm(rk(:)), alphaUsed );
   
   end
-  xk = proxf(xk, gamma);
+  xk = proxf(xk(1:n), gamma);
   xStar = xk;
 
 end

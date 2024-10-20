@@ -42,7 +42,7 @@ for lambda_idx = 1:numel(lambdas)
     disp(lstr);
 
     f = @(x) 0.5*norm(x - noised_im, 'fro')^2;
-    g = @(x) lambda*tvNorm(x);
+    g = @(x) lambda*tvNorm(reshape(x, sizex));
     ga = @(x) lambda * tvNorm(computeGradient(x));
     obj = @(x) f(x) + g(x);
     obja = @(x) f(x) + ga(x);
@@ -86,8 +86,8 @@ for lambda_idx = 1:numel(lambdas)
         % [xStar, iters, alphas, objVals_newls] = primal_dual_dr_aoi_newls(x0, ...
         %     proxftilde,proxgconj, ftilde, gtilde, maxIter, theta, A, B, gamma);
         
-        [xStar_new, objVals_newls_new, alphas_new] = gPDHG_wls(z0, proxf,proxgconj, fflat, ...
-                        g, maxIter, theta, A, B, gamma);
+        [xStar_new, objVals_newls_new, alphas_new] = gPDHG_wls(z0, proxf_flat,proxgconj, fflat, ...
+                        g, theta, A, B, gamma);
 
         [xStar_old, objVals_newls_old, alphas] = gPDHG_wls_old(x0, proxftilde,proxgconj, ftilde, ...
                         gtilde, maxIter, theta, A, B, gamma, n, m);
