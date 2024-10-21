@@ -40,26 +40,26 @@ fftSamples_wavACR_pf( fsr > 0 ) = pfData( fsr > 0 );
 [~,phaseImg] = mri_reconPartialFourier( fftSamples_wavACR_pf, sFSR );
 phases = angle( phaseImg );
 
-N = 75;
+N = 150;
 gammas = 10.^(-12:2);
 
-drObj = zeros([numel(gammas) N]);
-drOut = zeros([numel(gammas) size(fftSamples_wavACR_pf(:), 1)]);
-
-drAOIObj = zeros([numel(gammas) N]);
-drAOIOut = zeros([numel(gammas) size(fftSamples_wavACR_pf(:), 1)]);
-
-pddrObj = zeros([numel(gammas) N]);
-pddrOut = zeros([numel(gammas) size(fftSamples_wavACR_pf(:), 1)]);
-
-pddrAOIObj = zeros([numel(gammas) N]);
-pddrAOIOut = zeros([numel(gammas) size(fftSamples_wavACR_pf(:), 1)]);
+% drObj = zeros([numel(gammas) N]);
+% drOut = zeros([numel(gammas) size(fftSamples_wavACR_pf(:), 1)]);
+% 
+% drAOIObj = zeros([numel(gammas) N]);
+% drAOIOut = zeros([numel(gammas) size(fftSamples_wavACR_pf(:), 1)]);
+% 
+% pddrObj = zeros([numel(gammas) N]);
+% pddrOut = zeros([numel(gammas) size(fftSamples_wavACR_pf(:), 1)]);
+% 
+% pddrAOIObj = zeros([numel(gammas) N]);
+% pddrAOIOut = zeros([numel(gammas) size(fftSamples_wavACR_pf(:), 1)]);
 
 pdhgObj = zeros([numel(gammas) N]);
 pdhgOut = zeros([numel(gammas) size(fftSamples_wavACR_pf(:), 1)]);
 
-aoiLSObj = zeros([numel(gammas) N]);
-aoiLSOut = zeros([numel(gammas) size(fftSamples_wavACR_pf(:), 1)]);
+% aoiLSObj = zeros([numel(gammas) N]);
+% aoiLSOut = zeros([numel(gammas) size(fftSamples_wavACR_pf(:), 1)]);
 
 gpdhgObj = zeros([numel(gammas) N]);
 gpdhgOut = zeros([numel(gammas) size(fftSamples_wavACR_pf(:), 1)]);
@@ -74,8 +74,8 @@ for gamma_idx = 1:numel(gammas)
     %     'alg', 'primalDualDR', 'gamma', gamma, 'N', N );
     % [xStar_pddrAOI, objVals_pddrAOI] = mri_reconCSPFHomodyne( fftSamples_wavACR_pf, sFSR, 'wavSplit', wavSplit, ...
     %     'alg', 'primalDualDR_avgOp', 'gamma', gamma, 'N', N );
-    % [xStar_pdhg, objVals_pdhg] = mri_reconCSPFHomodyne( fftSamples_wavACR_pf, sFSR, 'wavSplit', wavSplit, ...
-    %     'alg', 'pdhg', 'gamma', gamma, 'N', N );
+    [xStar_pdhg, objVals_pdhg] = mri_reconCSPFHomodyne( fftSamples_wavACR_pf, sFSR, 'wavSplit', wavSplit, ...
+        'alg', 'pdhg', 'gamma', gamma, 'N', N );
     [xStar_gpdhg, objVals_gpdhg] = mri_reconCSPFHomodyne( fftSamples_wavACR_pf, sFSR, 'wavSplit', wavSplit, ...
         'alg', 'gpdhg', 'gamma', gamma, 'N', N );
     % [xStar_ls, objVals_ls] = mri_reconCSPFHomodyne( fftSamples_wavACR_pf, sFSR, 'wavSplit', wavSplit, ...
@@ -93,9 +93,9 @@ for gamma_idx = 1:numel(gammas)
     % 
     % pddrAOIObj(gamma_idx, :) = objVals_pddrAOI;
     % pddrAOIOut(gamma_idx, :) = xStar_pddrAOI(:);
-    % 
-    % pdhgObj(gamma_idx, :) = objVals_pdhg;
-    % pdhgOut(gamma_idx, :) = xStar_pdhg(:);
+
+    pdhgObj(gamma_idx, :) = objVals_pdhg;
+    pdhgOut(gamma_idx, :) = xStar_pdhg(:);
     % 
     gpdhgObj(gamma_idx, :) = objVals_gpdhg;
     gpdhgOut(gamma_idx, :) = xStar_gpdhg(:);

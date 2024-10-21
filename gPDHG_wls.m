@@ -65,7 +65,8 @@ function [xStar, objVals, alphasUsed] = gPDHG_wls( z0, proxf, proxgconj, f, g, t
   end
 
   
-  objFun = @(x) f(proxf(x, gamma)) + g(applyA(proxf(x, gamma)));
+  % objFun = @(x) f(proxf(x, gamma)) + g(applyA(proxf(x, gamma)));
+  objFun = @(x) f(x) + g(applyA(x));
   
   doLineSearch = true;
   doLineSearchTest = true;
@@ -175,7 +176,7 @@ function [xStar, objVals, alphasUsed] = gPDHG_wls( z0, proxf, proxgconj, f, g, t
       fprintf('iter: %d   objVal: %d   res: %d  alpha: %d\n', optIter, objVals(optIter), norm(rk(:)), alphaUsed );
   
   end
-  xk = proxf(xk(1:n), gamma);
-  xStar = xk;
+  % xk = proxf(xk(1:n), gamma);
+  xStar = xk(1:n);
 
 end

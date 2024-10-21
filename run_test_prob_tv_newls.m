@@ -14,7 +14,7 @@ n = size(noised_im(:), 1);
 figure; imshowscale(noised_im, 5);
 
 % info for saving variables
-dirStr = '/home/users/alex/Documents/MATLAB/tvRunData_new1020';
+dirStr = '/home/alex/Documents/MATLAB/tvRunData_new1020';
 
 % compute stuff for PDDR line searches
 

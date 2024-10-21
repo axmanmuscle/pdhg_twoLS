@@ -13,7 +13,8 @@ xLast = resize(xIn, [n+m 1]) - taukm1 * AB(zIn, 'transp');
 
 xk = proxf(xIn - taukm1*At(zIn), taukm1);
 
-tauk = taukm1 * sqrt(1 + thetakm1);
+% tauk = taukm1 * sqrt(1 + thetakm1);
+tauk=taukm1;
 
 accept = false;
 while ~accept
