@@ -7,7 +7,7 @@ delta = 0.99;
 mu = 0.8;
 
 n = size(xIn, 1);
-m = size(zIn, 1);
+m = numel(zIn);
 
 xLast = resize(xIn, [n+m 1]) - taukm1 * AB(zIn, 'transp');
 

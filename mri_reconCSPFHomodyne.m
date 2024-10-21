@@ -38,6 +38,9 @@ function [recon, objValues] =  mri_reconCSPFHomodyne(kData, sFSR, varargin )
       Px = mri_reconPFHomodyne( x, sFSR, 'phases', phases);
       out = wtDaubechies2( Px, wavSplit );
     else
+        if size(in, 2) == 1
+            in = reshape(in, [sqrt(size(in, 1)) sqrt(size(in, 1))]);
+        end
       Whin = iwtDaubechies2(in, wavSplit);
       Ptx = mri_reconPFHomodyne( Whin, sFSR, 'phases', phases, 'op', 'transp' );
       out = Ptx( unknownIndxs );
@@ -76,6 +79,9 @@ function [recon, objValues] =  mri_reconCSPFHomodyne(kData, sFSR, varargin )
     if nargin < 2 || strcmp( op, 'notransp' )
       out = applyA( in(1:nUnknown) ) + applyB( in(nUnknown+1:end) );
     else
+        if size(in, 2) == 1
+            in = reshape(in, [sqrt(size(in, 1)) sqrt(size(in, 1))]);
+        end
       out = zeros( nUnknown + nMask, 1 );
       out(1:nUnknown) = applyA( in, 'transp' );
       out(nUnknown+1:end) = applyB( in, 'transp' );
@@ -226,8 +232,8 @@ function [recon, objValues] =  mri_reconCSPFHomodyne(kData, sFSR, varargin )
 
     case 'gpdhg'
       objF = @(x) f_tilde( proxf_tilde(x) ) + g_tilde( proxf_tilde(x) );
-      [xStar,objValues,alphas] = gPDHG_wls( x0, @proxf_tilde, @proxgConj,@f_tilde,@g_tilde, N, ...
-        1, @applyA, @applyB, gamma, nUnknown, nMask );
+      [xStar,objValues,alphas] = gPDHG_wls( k0, @proxf, @proxgConj, @f, @g, ...
+        1, @applyA, @applyB, gamma, 'maxIter', N);
     otherwise
       error( 'Unrecognized algorithm' );
   end

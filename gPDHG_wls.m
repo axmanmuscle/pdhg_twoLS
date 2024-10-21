@@ -28,8 +28,6 @@ function [xStar, objVals, alphasUsed] = gPDHG_wls( z0, proxf, proxgconj, f, g, t
     applyB = @(x) B(x, 'notransp');
     applyBt = @(x) B(x, 'transp');
 
-
-
   else
       disp('both A, B must be numeric or functions');
       return
@@ -91,7 +89,11 @@ function [xStar, objVals, alphasUsed] = gPDHG_wls( z0, proxf, proxgconj, f, g, t
   xk = x0;
   tauk = tau0;
   thetak = theta0;
-  zk = zeros([m 1]);
+  if numel( y0 ) > 0
+      zk = y0;
+  else
+    zk = Az0;
+  end
   
   nAlphas = numel( alphas );
   normRks = zeros( nAlphas, 1 );
@@ -112,7 +114,7 @@ function [xStar, objVals, alphasUsed] = gPDHG_wls( z0, proxf, proxgconj, f, g, t
   
       if doLineSearch == true
   
-          for alphaIndx = 1 : nAlphas
+          parfor alphaIndx = 1 : nAlphas
               alpha = alphas( alphaIndx );
               xAlpha = xk + alpha * rk;
               xs{alphaIndx} = xAlpha;
