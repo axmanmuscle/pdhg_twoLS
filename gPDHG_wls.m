@@ -1,15 +1,17 @@
-function [xStar, objVals, alphasUsed] = gPDHG_wls( z0, proxf, proxgconj, f, g, theta, A, B, gamma, varargin )
+function [xStar, objVals, alphasUsed] = gPDHG_wls( z0, proxf, proxgconj, f, g, A, B, varargin )
   % implements our new generalized PDHG with line search
-  % make this take in proxf and proxgconj not tilde versions
-  % just like pdhg
 
   p = inputParser;
   p.addParameter( 'f', [] );
   p.addParameter( 'maxIter', 100, @ispositive );
   p.addParameter( 'y0', [], @isnumeric );
+  p.addParameter( 'beta0', 1, @isnumeric);
+  p.addParameter( 'tau0', 1, @isnumeric);
   p.parse( varargin{:} );
   maxIter = p.Results.maxIter;
   y0 = p.Results.y0;
+  beta0 = p.Results.beta0;
+  tau0 = p.Results.tau0;
 
   if isnumeric(A) && isnumeric(B)
     m = size( A, 1 );
@@ -82,14 +84,14 @@ function [xStar, objVals, alphasUsed] = gPDHG_wls( z0, proxf, proxgconj, f, g, t
   alphas = alpha0 .* ( alpha_change.^(0:k) );
   alphas(end) = alpha_bar;
   
-  S = @(xIn, zIn, tauk, thetak) applyS_pdhgwLS_op(xIn, zIn, proxf, proxgconj, tauk, thetak, theta, applyA, applyAt, @applyAB);
+  S = @(xIn, zIn, tauk, tau_ratiok, alpha) applyS_pdhgwLS_op(xIn, zIn, proxf, proxgconj, beta0, tauk, tau_ratiok, alpha, applyA, applyAt, @applyAB);
   
-  tau0 = 1;
-  theta0 = 1;
+  % tau0 = 1;
+  tau_ratio0 = 1;
   
   xk = x0;
   tauk = tau0;
-  thetak = theta0;
+  tau_ratiok = tau_ratio0;
   if numel( y0 ) > 0
       zk = y0;
   else
@@ -101,13 +103,15 @@ function [xStar, objVals, alphasUsed] = gPDHG_wls( z0, proxf, proxgconj, f, g, t
   xs = cell( 1, nAlphas );
   rks = cell( 1, nAlphas );
   tauks = cell( 1, nAlphas );
-  thetaks = cell( 1, nAlphas );
+  tau_ratioks = cell( 1, nAlphas );
   xks = cell( 1, nAlphas );
   zks = cell( 1, nAlphas );
+
+  xOut = xk(1:n);
+  zOut = zk;
   
-  [sxk, xOut, zOut, tauk, thetak] = S(xk(1:n), zk, tauk, thetak);
-  rk = sxk - xk;
-  
+  % [sxk, xOut, zOut, tauk, tau_ratiok, xtest, rk] = S(xOut, zOut, tauk, tau_ratiok, 50);
+  rk = xk;
   normRk = sqrt(real(dotP(rk, rk)));
   
   for optIter = 1:maxIter
@@ -115,15 +119,18 @@ function [xStar, objVals, alphasUsed] = gPDHG_wls( z0, proxf, proxgconj, f, g, t
   
       if doLineSearch == true
   
-          parfor alphaIndx = 1 : nAlphas
+          for alphaIndx = 1 : nAlphas
               alpha = alphas( alphaIndx );
-              xAlpha = xk + alpha * rk;
+              % this is eq (6) in Boyd's LS paper
+              % performs xkp1 = xk + alphak(Sxk - xk)
+              [~, xOutp1, zOutp1, taukp1, tau_ratiokp1, ~, ~] = S(xOut, zOut, tauk, tau_ratiok, alpha);
+
+              % this now gets the next step, rkalpha = Sxk+1 - xk+1
+              [~, xOutAlpha, zOutAlpha, taukAlpha, tau_ratiokAlpha, xAlpha, rkAlpha] = S(xOutp1, zOutp1, taukp1, tau_ratiokp1, alpha);
               xs{alphaIndx} = xAlpha;
-              [sxAlpha, xOutAlpha, zOutAlpha, taukAlpha, thetakAlpha] = S(xOut, zOut, tauk, thetak);
-              rkAlpha = sxAlpha - xAlpha;
               rks{alphaIndx} = rkAlpha;
               tauks{alphaIndx} = taukAlpha;
-              thetaks{alphaIndx} = thetakAlpha;
+              tau_ratioks{alphaIndx} = tau_ratiokAlpha;
               xks{alphaIndx} = xOutAlpha;
               zks{alphaIndx} = zOutAlpha;
               
@@ -138,16 +145,15 @@ function [xStar, objVals, alphasUsed] = gPDHG_wls( z0, proxf, proxgconj, f, g, t
           xk = xs{ bestAlphaIndx };
           rk = rks{ bestAlphaIndx };
           tauk = tauks{ bestAlphaIndx };
-          thetak = thetaks{ bestAlphaIndx };
+          tau_ratiok = tau_ratioks{ bestAlphaIndx };
           xOut = xks{ bestAlphaIndx };
           zOut = zks{ bestAlphaIndx };
   
       else
   
           alphaUsed = alpha_bar;
-          xk = xk + alpha_bar * rk;
-          [sx, xOut, zOut, tauk, thetak] = S(xOut, zOut, tauk, thetak);
-          rk = sx - xk;
+          % xk = xk + alpha_bar * rk;
+          [~, xOut, zOut, tauk, tau_ratiok, xk, rk] = S(xOut, zOut, tauk, tau_ratiok, alpha_bar);
       end
   
       objValue = objFun(xk(1:n));
@@ -173,7 +179,7 @@ function [xStar, objVals, alphasUsed] = gPDHG_wls( z0, proxf, proxgconj, f, g, t
       end
   
   
-      fprintf('iter: %d   objVal: %d   res: %d  alpha: %d\n', optIter, objVals(optIter), norm(rk(:)), alphaUsed );
+      % fprintf('iter: %d   objVal: %d   res: %d  alpha: %d\n', optIter, objVals(optIter), norm(rk(:)), alphaUsed );
   
   end
   % xk = proxf(xk(1:n), gamma);

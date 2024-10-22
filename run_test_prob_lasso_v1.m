@@ -37,7 +37,7 @@ pgtest = proxg(xtest, gammatest) + gammatest*proxgconj(xtest/gammatest, 1/gammat
 
 x0 = zeros(size(x));
 
-alpha = 0.75; % alpha for AOI steps
+alpha = 1.25; % alpha for AOI steps
 gamma = .25; % step size for prox operators
 
 %% TO DO
@@ -178,10 +178,9 @@ aoi_step2 = (1 - alpha)*zold1 + alpha*sx1;
 %%% pdhg wls aoi iteration
 tau0 = 1;
 theta0 = 1;
-[sx2, xOut, zOut, tauk, thetak] = applyS_pdhgwLS(x0_dr, z0, proxf, proxgconj, gamma/0.8, 0, alpha, A, B);
+[sx2, xOut, zOut, tauk, thetak, xNew] = applyS_pdhgwLS(x0_dr, z0, proxf, proxgconj, gamma/0.8, 0, alpha, A, B);
 xaoi_pdhg_new = (1 - alpha)*x0 + alpha*sx;
 
-%%% maybe no way to verify that this actually works but okay lmao
 
 
 % %%% eqs 36

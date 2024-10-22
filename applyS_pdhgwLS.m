@@ -1,4 +1,4 @@
-function [sx, xOut, zOut, tau, theta] = applyS_pdhgwLS(xIn, zIn, proxf, proxgconj, taukm1, thetakm1, alpha, A, B)
+function [sx, xOut, zOut, tau, theta, xNew] = applyS_pdhgwLS(xIn, zIn, proxf, proxgconj, taukm1, thetakm1, alpha, A, B)
 % this applyS will do PDHG iterations with Malitsky's line search
 
 %%% line search params
@@ -13,7 +13,8 @@ xLast = resize(xIn, [n+m 1]) - taukm1 * [A'; B'] * zIn;
 
 xk = proxf(xIn - taukm1*A'*zIn, taukm1);
 
-tauk = taukm1 * sqrt(1 + thetakm1);
+% tauk = taukm1 * sqrt(1 + thetakm1);
+tauk = taukm1;
 
 accept = false;
 while ~accept

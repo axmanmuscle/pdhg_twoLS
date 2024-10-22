@@ -1,8 +1,8 @@
-function [sx, xOut, zOut, tau, theta] = applyS_pdhgwLS_op(xIn, zIn, proxf, proxgconj, taukm1, thetakm1, alpha, A, At, AB)
+function [sx, xOut, zOut, tau, theta, xNew, sxmx] = applyS_pdhgwLS_op(xIn, zIn, proxf, proxgconj, beta, taukm1, thetakm1, alpha, A, At, AB)
 % this applyS will do PDHG iterations with Malitsky's line search
 
 %%% line search params
-beta = 0.8;
+% beta = 0.8;
 delta = 0.99;
 mu = 0.8;
 
@@ -35,8 +35,9 @@ end
 xOut = (1-2*alpha)*xIn + 2*alpha*xbar_k;
 zOut = (1-2*alpha)*zIn + 2*alpha*zkp1;
 
-xNew = resize(xOut, [n+m 1]) - taukm1 * AB(zOut, 'transp');
-sx = (1/alpha) * xNew + (1 - 1/alpha) * xLast;
+xNew = resize(xOut, [n+m 1]) - taukm1 * AB(zOut, 'transp'); % this is a full aoi step/right hand side
+sx = (1/alpha) * xNew + (1 - 1/alpha) * xLast; % this isolates Sx, independent of alpha
+sxmx = (1/alpha) * (xNew - xLast); % this isolates Sx - x, independent of alpha
 
 tau = tauk;
 theta = thetak;
