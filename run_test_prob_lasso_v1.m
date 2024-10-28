@@ -37,7 +37,7 @@ pgtest = proxg(xtest, gammatest) + gammatest*proxgconj(xtest/gammatest, 1/gammat
 
 x0 = zeros(size(x));
 
-alpha = 1.25; % alpha for AOI steps
+alpha = 0.5; % alpha for AOI steps
 gamma = .25; % step size for prox operators
 
 %% TO DO
@@ -157,6 +157,15 @@ zbar_pdhg2 = proxgconj(z_pdhg + sigma*A*(2*xbar_pdhg2 - x_pdhg), gamma);
 x_pdhg2 = (1-2*alpha)*x_pdhg + 2*alpha*xbar_pdhg2;
 z_pdhg2 = (1-2*alpha)*z_pdhg + 2*alpha*zbar_pdhg2;
 
+%%% second pdhg form
+z0 = zeros([m 1]);
+y_pdhg = proxgconj(z0 + sigma*A*x0_dr, sigma);
+x_pdhg_new = proxf(x0_dr - gamma*A'*y_pdhg, gamma);
+xbar_pdhg_new = x_pdhg_new + 1*(x_pdhg_new - x0_dr);
+
+%%% idk what's going on anymore
+[xStar] = pdhg(x0_dr, proxf, proxgconj, gamma, 'sigma', sigma, 'A', A, 'N', 3)
+
 %%% after one step we should have
 %%% resize(xaoi_pdhg, [n+m 1]) - gamma * [A'; B'] * zaoi_pdhg = z_pddr
 [xaoi_pdhg, zaoi_pdhg] = applyS_pdhg(x0_dr, z0, proxf, proxgconj, gamma, sigma, alpha, A, B);
@@ -181,6 +190,10 @@ theta0 = 1;
 [sx2, xOut, zOut, tauk, thetak, xNew] = applyS_pdhgwLS(x0_dr, z0, proxf, proxgconj, gamma/0.8, 0, alpha, A, B);
 xaoi_pdhg_new = (1 - alpha)*x0 + alpha*sx;
 
+applyA = @(in) A*in;
+At = @(in) A'*in;
+Bt = @(in) B'*in;
+[xOut_n, zOut_n, tau_n, nsxmx, xNewn] = applyS_pdhgwLS_op_new(x0_dr, z0, proxf, proxgconj, 1, 1, alpha, applyA, At, Bt);
 
 
 % %%% eqs 36
