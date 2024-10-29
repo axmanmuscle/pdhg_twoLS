@@ -1,4 +1,4 @@
-function [xOut, zOut, tau, nsxmx, xNew] = applyS_pdhgwLS_op(xIn, zIn, proxf, proxgconj, beta, taukm1, alpha, A, At, Bt)
+function [xOut, zOut, tau, nsxmx] = applyS_pdhgwLS_op(xIn, zIn, proxf, proxgconj, beta, taukm1, alpha, A, At, Bt)
 % this applyS will do PDHG iterations with Malitsky's line search
 
 %%% line search params
@@ -64,7 +64,6 @@ else
 end
 
 tau = tauk;
-xNew = [xNew1;xNew2];
 
 end
 

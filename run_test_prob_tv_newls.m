@@ -35,7 +35,7 @@ sizex = size(computeGradient(noised_im));
 
 % lambdas = linspace(0.001, 5, 100);
 lambdas = 2.^(-6:2);
-for lambda_idx = 1:numel(lambdas)
+parfor lambda_idx = 1:numel(lambdas)
     x0 = zeros([n + m, 1]);
     lambda = lambdas(lambda_idx);
     lstr = sprintf('lambda %f', lambda);
@@ -82,12 +82,13 @@ for lambda_idx = 1:numel(lambdas)
         z0 = zeros([n 1]);
         disp(gamma_idx);
         gamma = gamma_vals(gamma_idx);
-        maxIter = 50;
+        tau = gamma/normA;
+        maxIter = 100;
         % [xStar, iters, alphas, objVals_newls] = primal_dual_dr_aoi_newls(x0, ...
         %     proxftilde,proxgconj, ftilde, gtilde, maxIter, theta, A, B, gamma);
         
         [xStar_new, objVals_newls_new, alphas_new] = gPDHG_wls(z0, proxf_flat,proxgconj, fflat, ...
-                        g, theta, A, B, gamma);
+                        g, A, B, 'tau0', tau, 'maxIter', maxIter);
 
         [xStar_old, objVals_newls_old, alphas] = gPDHG_wls_old(x0, proxftilde,proxgconj, ftilde, ...
                         gtilde, maxIter, theta, A, B, gamma, n, m);

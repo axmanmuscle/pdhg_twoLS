@@ -62,7 +62,7 @@ function [xOut, objVals, alphasUsed] = gPDHG_wls( x0, proxf, proxgconj, f, g, A,
   alphas = alpha0 .* ( alpha_change.^(0:k) );
   alphas(end) = alpha_bar;
   
-  S = @(xIn, zIn, tauk, alpha) applyS_pdhgwLS_op_new(xIn, zIn, proxf, proxgconj, beta0, tauk, alpha, applyA, applyAt, applyBt);
+  S = @(xIn, zIn, tauk, alpha) applyS_pdhgwLS_op(xIn, zIn, proxf, proxgconj, beta0, tauk, alpha, applyA, applyAt, applyBt);
 
   nAlphas = numel( alphas );
   normRks = zeros( nAlphas, 1 );

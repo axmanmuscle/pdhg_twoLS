@@ -1,6 +1,6 @@
 rng(2024);
-m = 1000;
-n = 100;
+m = 2500;
+n = 500;
 
 A = randn([m n]);
 x = randn([n 1]);
@@ -37,7 +37,7 @@ for bidx = 1:numel(betas)
     beta = betas(bidx)
     tauObjValues = zeros([numel(taus) 1]);
     parfor tidx = 1:numel(taus)
-        tau = taus(tidx);
+        tau = taus(tidx)
         % [xStar_pdhgwls, objVals_pdhgwls] = pdhgWLS(x0, proxf, proxgconj, 'A', A, 'f', f, 'g', g, 'tau', tau, 'N', 1000, 'beta', beta);
         [xStar, objVals] = gPDHG_wls(x0, proxf, proxgconj, f, g, A, B, 'maxIter', 750, 'beta0', beta, 'tau0', tau);
         xStar = max(xStar, 0);
@@ -48,10 +48,11 @@ end
 
 tauObjValues = zeros([numel(taus) 1]);
 for tidx = 1:numel(taus)
-    tau = taus(tidx)
-    sigma = 0.99 / (tau * norm(A)^2);
-    beta = 0.99 / (tau*norm(A))^2;
-    [xStar, objVals] = gPDHG_wls(x0, proxf, proxgconj, f, g, A, B, 'maxIter', 5000, 'beta0', beta, 'tau0', tau);
+    tau = taus(tidx);
+    % sigma = 0.99 / (tau * norm(A)^2);
+    % beta = 0.99 / (tau*norm(A))^2;
+    beta = 1;
+    [xStar, objVals_new] = gPDHG_wls(x0, proxf, proxgconj, f, g, A, B, 'maxIter', 1000, 'beta0', beta, 'tau0', tau);
     xStar = max(xStar, 0);
     tauObjValues(tidx) = f(xStar);
 end
