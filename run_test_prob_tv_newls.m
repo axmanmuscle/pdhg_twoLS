@@ -35,6 +35,7 @@ sizex = size(computeGradient(noised_im));
 
 % lambdas = linspace(0.001, 5, 100);
 lambdas = 2.^(-6:0.5:2);
+save tv2d_rundata.mat;
 for lambda_idx = 1:numel(lambdas)
     x0 = zeros([n + m, 1]);
     lambda = lambdas(lambda_idx);
@@ -113,13 +114,15 @@ for lambda_idx = 1:numel(lambdas)
         s1 = struct("objVals_newls_new", objVals_newls_new, "xStar_new", xStar_new);
         % s2 = struct("objVals_newls_old", objVals_newls_old, "xStar_old", xStar_old);
         s3 = struct("objVals_pdhgaoi", objVals_pdhgaoi, "xStar_aoi", xStar_aoi);
-        save(objStr_new, "objVals_newls_new","-fromstruct",s1);
-        save(xStr_new, "xStar_new","-fromstruct",s1);
+        % save(objStr_new, "objVals_newls_new","-fromstruct",s1);
+       
         % save(objStr_old, "objVals_newls_old","-fromstruct",s2);
         % save(xStr_old, "xStar_old","-fromstruct",s2);
-        save(objStr_aoi, "objVals_pdhgaoi","-fromstruct",s3);
-        save(xStr_aoi, "xStar_aoi","-fromstruct",s3);
-
+        
+        parsave(objStr_new, objVals_newls_new)
+        parsave(xStr_new, xStar_new);
+        parsave(objStr_aoi, objVals_pdhgaoi);
+        parsave(xStr_aoi, xStar_aoi);
         % xend = proxf_flat(xStar(1:n), gamma);
         % final_obj = objaf(xend);
         % if final_obj < best_obj
