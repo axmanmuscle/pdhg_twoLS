@@ -14,7 +14,7 @@ n = size(noised_im(:), 1);
 figure; imshowscale(noised_im, 5);
 
 % info for saving variables
-dirStr = '/home/alex/Documents/MATLAB/tvRunData_new1020';
+dirStr = 'E:\matlab\tvRunData';
 
 % compute stuff for PDDR line searches
 
@@ -34,8 +34,8 @@ sizex = size(computeGradient(noised_im));
 
 
 % lambdas = linspace(0.001, 5, 100);
-lambdas = 2.^(-6:2);
-parfor lambda_idx = 1:numel(lambdas)
+lambdas = 2.^(-6:0.5:2);
+for lambda_idx = 1:numel(lambdas)
     x0 = zeros([n + m, 1]);
     lambda = lambdas(lambda_idx);
     lstr = sprintf('lambda %f', lambda);
@@ -77,21 +77,21 @@ parfor lambda_idx = 1:numel(lambdas)
     best_idx = 0;
     best_obj = Inf;
     
-    gamma_vals = 10.^(-8:4);
-    for gamma_idx = 1:numel(gamma_vals)
+    gamma_vals = 10.^(-8:0.1:4);
+    parfor gamma_idx = 1:numel(gamma_vals)
         z0 = zeros([n 1]);
         disp(gamma_idx);
         gamma = gamma_vals(gamma_idx);
         tau = gamma/normA;
-        maxIter = 100;
+        maxIter = 10;
         % [xStar, iters, alphas, objVals_newls] = primal_dual_dr_aoi_newls(x0, ...
         %     proxftilde,proxgconj, ftilde, gtilde, maxIter, theta, A, B, gamma);
         
         [xStar_new, objVals_newls_new, alphas_new] = gPDHG_wls(z0, proxf_flat,proxgconj, fflat, ...
-                        g, A, B, 'tau0', tau, 'maxIter', maxIter);
+                        g, A, B, 'tau0', tau, 'maxIter', maxIter, 'verbose', true);
 
-        [xStar_old, objVals_newls_old, alphas] = gPDHG_wls_old(x0, proxftilde,proxgconj, ftilde, ...
-                        gtilde, maxIter, theta, A, B, gamma, n, m);
+        % [xStar_old, objVals_newls_old, alphas] = gPDHG_wls_old(x0, proxftilde,proxgconj, ftilde, ...
+        %                 gtilde, maxIter, theta, A, B, gamma, n, m);
 
         S_pdDR = @(in) -gamma * Rgtildeconj( Rftilde( in, gamma ) / gamma , 1/gamma );
         
@@ -111,12 +111,12 @@ parfor lambda_idx = 1:numel(lambdas)
 
         %%% parfor only options
         s1 = struct("objVals_newls_new", objVals_newls_new, "xStar_new", xStar_new);
-        s2 = struct("objVals_newls_old", objVals_newls_old, "xStar_old", xStar_old);
+        % s2 = struct("objVals_newls_old", objVals_newls_old, "xStar_old", xStar_old);
         s3 = struct("objVals_pdhgaoi", objVals_pdhgaoi, "xStar_aoi", xStar_aoi);
         save(objStr_new, "objVals_newls_new","-fromstruct",s1);
         save(xStr_new, "xStar_new","-fromstruct",s1);
-        save(objStr_old, "objVals_newls_old","-fromstruct",s2);
-        save(xStr_old, "xStar_old","-fromstruct",s2);
+        % save(objStr_old, "objVals_newls_old","-fromstruct",s2);
+        % save(xStr_old, "xStar_old","-fromstruct",s2);
         save(objStr_aoi, "objVals_pdhgaoi","-fromstruct",s3);
         save(xStr_aoi, "xStar_aoi","-fromstruct",s3);
 

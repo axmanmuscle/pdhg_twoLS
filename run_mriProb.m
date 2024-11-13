@@ -1,8 +1,8 @@
 % load('kData_knee.mat', 'kData');
-load('brain.mat', 'd2');
-kData = d2;
-% load('ankle.mat')
-% kData = d1;
+% load('brain.mat', 'd2');
+% kData = d2;
+load('ankle.mat')
+kData = d1;
 rng(20240429);
 
 kData = kData./max(abs(kData(:)));
@@ -29,7 +29,7 @@ fftSamples_wavACR = bsxfun( @times, kData, wavMaskACR );
 gpdhgRecons = cell(1,1,8);
 pdhgRecons = cell(1,1,8);
 
-for coilIdx = 1:8
+parfor coilIdx = 1:8
     disp(coilIdx);
     coilData = fftSamples_wavACR(:,:,coilIdx);
     pfData = kData(:, :, coilIdx);
@@ -44,7 +44,7 @@ for coilIdx = 1:8
     [~,phaseImg] = mri_reconPartialFourier( fftSamples_wavACR_pf, sFSR );
     phases = angle( phaseImg );
 
-    N = 100;
+    N = 5000;
     gamma = 10.^(-3);
     tau0 = 1;
 

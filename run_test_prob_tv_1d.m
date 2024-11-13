@@ -2,9 +2,9 @@ rng(20241024)
 num_segments = 5;
 len_segments = 400;
 
-C = 0.8*rand([len_segments 1]) + randi([-5 5]);
+C = 0.9*rand([len_segments 1]) + randi([-5 5]);
 for i = 1:num_segments-1
-    A = 0.8*rand([len_segments 1]) + randi([-2 5]);
+    A = 0.9*rand([len_segments 1]) + randi([-2 5]);
     C = [C; A];
 end
 
@@ -32,14 +32,15 @@ proxf = @(x, t) proxL2Sq(x, t, C);
 
 lambdas = [0.01, 0.1, 1, 2, 5, 10, 100, 1000, 1.0e4, 1.0e5];
 
-taus = 10.^(-6:0.5:2) / norm(Amat);
-maxIter = 200;
+taus = 10.^(-6:0.05:4);
+betas = 10.^(-1:0.05:1);
+maxIter = 5000;
 
-obj_vals = zeros([numel(lambdas) numel(taus)]);
-obj_vals(:, :, maxIter) = 0;
+obj_vals = zeros([numel(lambdas) numel(taus) numel(betas)]);
+obj_vals(:, :, :, maxIter) = 0;
 
-final_vals = zeros([numel(lambdas) numel(taus)]);
-final_vals(:, :, n) = 0;
+final_vals = zeros([numel(lambdas) numel(taus) numel(betas)]);
+final_vals(:, :, :, n) = 0;
 
 for lambda_idx = 1:numel(lambdas)
     lambda = lambdas(lambda_idx);
@@ -53,11 +54,16 @@ for lambda_idx = 1:numel(lambdas)
     for tau_idx = 1:numel(taus)
         tau = taus(tau_idx)
 
-        [xStar, objVals, alphas] = gPDHG_wls(z0, proxf, proxgconj, ...
-            f, g, Amat, B, 'maxIter', maxIter, 'tau0', tau, 'verbose', true);
+        for beta_idx = 1:numel(betas)
+            beta = betas(beta_idx)
 
-        obj_vals(lambda_idx, tau_idx, :) = objVals;
-        final_vals(lambda_idx, tau_idx, :) = xStar;
+            [xStar, objVals, alphas] = gPDHG_wls(z0, proxf, proxgconj, ...
+                f, g, Amat, B, 'maxIter', maxIter, 'tau0', tau, 'verbose', true);
+    
+            obj_vals(lambda_idx, tau_idx, beta_idx, :) = objVals;
+            final_vals(lambda_idx, tau_idx, beta_idx, :) = xStar;
+        end
     end
         % figure; plot(xStar_new);
 end
+save tv_1d.mat
