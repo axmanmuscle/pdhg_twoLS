@@ -84,7 +84,7 @@ for lambda_idx = 1:numel(lambdas)
         disp(gamma_idx);
         gamma = gamma_vals(gamma_idx);
         tau = gamma/normA;
-        maxIter = 10;
+        maxIter = 1000;
         % [xStar, iters, alphas, objVals_newls] = primal_dual_dr_aoi_newls(x0, ...
         %     proxftilde,proxgconj, ftilde, gtilde, maxIter, theta, A, B, gamma);
         

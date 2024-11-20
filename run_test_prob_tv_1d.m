@@ -32,8 +32,8 @@ proxf = @(x, t) proxL2Sq(x, t, C);
 
 lambdas = [0.01, 0.1, 1, 2, 5, 10, 100, 1000, 1.0e4, 1.0e5];
 
-taus = 10.^(-6:0.05:4);
-betas = 10.^(-1:0.05:1);
+taus = 10.^(-6:0.5:4);
+betas = 10.^(-1:0.5:1);
 maxIter = 5000;
 
 obj_vals = zeros([numel(lambdas) numel(taus) numel(betas)]);

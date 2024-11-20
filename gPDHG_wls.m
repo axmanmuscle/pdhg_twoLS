@@ -53,7 +53,7 @@ function [xOut, objVals, alphasUsed] = gPDHG_wls( x0, proxf, proxgconj, f, g, A,
   
   %%% parameters
   alpha_bar = 0.5; % alpha_bar
-  eps = 0.03; % eps for (1 - eps) || rbar_k || in linesearch
+  eps = 0.03; % eps for (1 - eps) || rbar_k || in linesearch                                                             
   epsHat = 0.05; % for line search test
   alpha0 = 50; % starting alpha
   alpha_change = 1/1.4; % factor for change in alpha during linesearch
