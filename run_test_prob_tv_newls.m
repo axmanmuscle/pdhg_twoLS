@@ -1,5 +1,7 @@
 function run_test_prob_tv_newls()
 %%% let's a total variation denoising problem
+vers = version('-release');
+vnum = vers(end-1);
 im = imread('cameraman.tif');
 im = double(im) ./ 255;
 
@@ -111,18 +113,20 @@ for lambda_idx = 1:numel(lambdas)
         xStr_aoi = sprintf('%s_x.mat', fstr_aoi);
 
         %%% parfor only options
-        s1 = struct("objVals_newls_new", objVals_newls_new, "xStar_new", xStar_new);
-        % s2 = struct("objVals_newls_old", objVals_newls_old, "xStar_old", xStar_old);
-        s3 = struct("objVals_pdhgaoi", objVals_pdhgaoi, "xStar_aoi", xStar_aoi);
-        % save(objStr_new, "objVals_newls_new","-fromstruct",s1);
-       
-        % save(objStr_old, "objVals_newls_old","-fromstruct",s2);
-        % save(xStr_old, "xStar_old","-fromstruct",s2);
-        
-        parsave(objStr_new, objVals_newls_new)
-        parsave(xStr_new, xStar_new);
-        parsave(objStr_aoi, objVals_pdhgaoi);
-        parsave(xStr_aoi, xStar_aoi);
+        if strcmp(vnum, '4')
+            s1 = struct("objVals_newls_new", objVals_newls_new, "xStar_new", xStar_new);
+            % s2 = struct("objVals_newls_old", objVals_newls_old, "xStar_old", xStar_old);
+            s3 = struct("objVals_pdhgaoi", objVals_pdhgaoi, "xStar_aoi", xStar_aoi);
+            % save(objStr_new, "objVals_newls_new","-fromstruct",s1);
+           
+            save(objStr_old, "objVals_newls_old","-fromstruct",s2);
+            save(xStr_old, "xStar_old","-fromstruct",s2);
+        elseif strcmp(vnum, '3')
+            parsave(objStr_new, objVals_newls_new)
+            parsave(xStr_new, xStar_new);
+            parsave(objStr_aoi, objVals_pdhgaoi);
+            parsave(xStr_aoi, xStar_aoi);
+        end
         % xend = proxf_flat(xStar(1:n), gamma);
         % final_obj = objaf(xend);
         % if final_obj < best_obj

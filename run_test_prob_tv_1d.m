@@ -42,7 +42,7 @@ obj_vals(:, :, :, maxIter) = 0;
 final_vals = zeros([numel(lambdas) numel(taus) numel(betas)]);
 final_vals(:, :, :, n) = 0;
 
-for lambda_idx = 1:numel(lambdas)
+parfor lambda_idx = 1:numel(lambdas)
     lambda = lambdas(lambda_idx);
 
     g = @(in) lambda * norm(in, 1);
