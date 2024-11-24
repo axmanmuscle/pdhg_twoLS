@@ -2,16 +2,19 @@ function run_test_prob_tv_pdhg()
 %%% let's a total variation denoising problem
 im = imread('cameraman.tif');
 im = double(im) ./ 256;
+im = imresize(im, 0.75);
 
-noise = 0.08*randn(size(im));
+noise = 0.25*randn(size(im));
 
 noised_im = im + noise;
 
 figure; imshowscale(noised_im);
 
+dirStr = "E:\matlab\tvRunData\pdhg_noise25";
 
 % lambdas = linspace(0.001, 5, 100);
-lambdas = 2.^(-6:6);
+% lambdas = 2.^(-6:6);
+lambdas = [0.05; 0.1; 0.5; 1];
 for lambda_idx = 1:numel(lambdas)
     x0 = zeros(size(noised_im));
     lambda = lambdas(lambda_idx);
@@ -29,28 +32,29 @@ for lambda_idx = 1:numel(lambdas)
     best_idx = 0;
     best_obj = Inf;
     normA = powerIteration(@computeGradient, noised_im);
-    gamma_vals = 10.^(-8:4);
-    for gamma_idx = 1:numel(gamma_vals)
+    gamma_vals = 10.^(-4:0.5:4);
+    parfor gamma_idx = 1:numel(gamma_vals)
         disp(gamma_idx);
         gamma = gamma_vals(gamma_idx);
-        [xStar_pdhg, objVals_pdhg] = pdhg(x0, proxf, proxgconj, gamma, 'N', 200, ...
+        [xStar_pdhg, objVals_pdhg] = pdhg(x0, proxf, proxgconj, gamma, 'N', 5000, ...
             'A', @computeGradient, 'f', f, 'g', g, 'normA', normA);
     
-        xend = proxf(xStar_pdhg, gamma);
-        final_obj = obja(xend);
-        if final_obj < best_obj
-            best_idx = gamma_idx;
-            xBest = xend;
-            bestObjs = objVals_pdhg;
-            best_obj = final_obj;
-        end
+        % xend = proxf(xStar_pdhg, gamma);
+
+        fstr_pdhg = sprintf('%s/lambda_%d_gamma_%d', dirStr, lambda_idx, gamma_idx);
+        objStr_pdhg = sprintf('%s_obj.mat', fstr_pdhg);
+        xStr_pdhg = sprintf('%s_x.mat', fstr_pdhg);
+
+        parsave(objStr_pdhg, objVals_pdhg)
+        parsave(xStr_pdhg, xStar_pdhg);
+
     end
     
-    figure; imshowscale(xBest); title(lstr)
-    
-    figure; plot(bestObjs); title(lstr);
-    disp(best_idx);
-    disp(gamma_vals(best_idx));
+    % figure; imshowscale(xBest); title(lstr)
+    % 
+    % figure; plot(bestObjs); title(lstr);
+    % disp(best_idx);
+    % disp(gamma_vals(best_idx));
 
 
 

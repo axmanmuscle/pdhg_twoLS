@@ -1,5 +1,5 @@
 rng(20241024)
-num_segments = 5;
+num_segments = 10;
 len_segments = 400;
 
 C = 0.9*rand([len_segments 1]) + randi([-5 5]);
