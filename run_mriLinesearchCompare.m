@@ -14,6 +14,10 @@ sImg = size( kData, (1:2) );
 vdSigFrac = 0.3;
 sampleFraction = 0.3;
 
+N = 5000;
+gammas = 10.^(-12:2);
+taus = 10.^(-6:0.5:1);
+
 wavSplit = makeWavSplit( sImg );
 % wavSplit = zeros(2);  wavSplit(1,1) = 1;
 [ fsr, sFSR ] = mri_makeFullySampledCenterRegion( sImg, wavSplit );
@@ -25,8 +29,15 @@ sampleMask = mri_makeSampleMask( sImg, nSamples, vdSig );
 wavMaskACR = mri_makeSampleMask( sImg, sum(sampleMask(:)), vdSig, 'startMask', fsr>0 );
 
 fftSamples_wavACR = bsxfun( @times, kData, wavMaskACR );
+pdhgObj = zeros([numel(gammas) N 8]);
+pdhgOut = zeros([numel(gammas) numel(sampleMask) 8]);
 
-coilIdx = 4;
+% aoiLSObj = zeros([numel(gammas) N]);
+% aoiLSOut = zeros([numel(gammas) size(fftSamples_wavACR_pf(:), 1)]);
+
+gpdhgObj = zeros([numel(gammas) N 8]);
+gpdhgOut = zeros([numel(gammas) numel(sampleMask) 8]);
+for coilIdx = 1:8
 coilData = fftSamples_wavACR(:,:,coilIdx);
 pfData = kData(:, :, coilIdx);
 fftSamples_wavACR_pf = coilData;
@@ -40,9 +51,7 @@ fftSamples_wavACR_pf( fsr > 0 ) = pfData( fsr > 0 );
 [~,phaseImg] = mri_reconPartialFourier( fftSamples_wavACR_pf, sFSR );
 phases = angle( phaseImg );
 
-N = 5000;
-gammas = 10.^(-12:2);
-taus = 10.^(-6:0.5:1);
+
 
 % drObj = zeros([numel(gammas) N]);
 % drOut = zeros([numel(gammas) size(fftSamples_wavACR_pf(:), 1)]);
@@ -56,16 +65,16 @@ taus = 10.^(-6:0.5:1);
 % pddrAOIObj = zeros([numel(gammas) N]);
 % pddrAOIOut = zeros([numel(gammas) size(fftSamples_wavACR_pf(:), 1)]);
 
-pdhgObj = zeros([numel(gammas) N]);
-pdhgOut = zeros([numel(gammas) size(fftSamples_wavACR_pf(:), 1)]);
+% pdhgObj = zeros([numel(gammas) N]);
+% pdhgOut = zeros([numel(gammas) size(fftSamples_wavACR_pf(:), 1)]);
 
 % aoiLSObj = zeros([numel(gammas) N]);
 % aoiLSOut = zeros([numel(gammas) size(fftSamples_wavACR_pf(:), 1)]);
 
-gpdhgObj = zeros([numel(gammas) N]);
-gpdhgOut = zeros([numel(gammas) size(fftSamples_wavACR_pf(:), 1)]);
+% gpdhgObj = zeros([numel(gammas) N]);
+% gpdhgOut = zeros([numel(gammas) size(fftSamples_wavACR_pf(:), 1)]);
 
-for gamma_idx = 1:numel(gammas)
+parfor gamma_idx = 1:numel(gammas)
     disp(gamma_idx)
     gamma = gammas(gamma_idx);
     tau0 = taus(gamma_idx);
@@ -97,14 +106,16 @@ for gamma_idx = 1:numel(gammas)
     % pddrAOIObj(gamma_idx, :) = objVals_pddrAOI;
     % pddrAOIOut(gamma_idx, :) = xStar_pddrAOI(:);
 
-    pdhgObj(gamma_idx, :) = objVals_pdhg;
-    pdhgOut(gamma_idx, :) = xStar_pdhg(:);
+    pdhgObj(gamma_idx, :, coilIdx) = objVals_pdhg;
+    pdhgOut(gamma_idx, :, coilIdx) = xStar_pdhg(:);
     % 
-    gpdhgObj(gamma_idx, :) = objVals_gpdhg;
-    gpdhgOut(gamma_idx, :) = xStar_gpdhg(:);
+    gpdhgObj(gamma_idx, :, coilIdx) = objVals_gpdhg;
+    gpdhgOut(gamma_idx, :, coilIdx) = xStar_gpdhg(:);
     % 
     % aoiLSObj(gamma_idx, :) = objVals_ls;
     % aoiLSOut(gamma_idx, :) = xStar_ls(:);
+end
+
 end
 
 

@@ -30,17 +30,20 @@ clear Bt;
 f = @(in) 0.5*norm(in - C, 2)^2;
 proxf = @(x, t) proxL2Sq(x, t, C);
 
-lambdas = [0.01, 0.1, 1, 2, 5, 10, 100, 1000, 1.0e4, 1.0e5];
+lambdas = [0.01, 0.1, 1, 2, 5, 10, 100, 1000];
 
-taus = 10.^(-6:0.5:4);
+taus = 10.^(-5:0.5:3);
 betas = 10.^(-1:0.5:1);
-maxIter = 5000;
+maxIter = 600;
 
 obj_vals = zeros([numel(lambdas) numel(taus) numel(betas)]);
 obj_vals(:, :, :, maxIter) = 0;
 
 final_vals = zeros([numel(lambdas) numel(taus) numel(betas)]);
 final_vals(:, :, :, n) = 0;
+
+num_taus = numel(taus);
+num_betas = numel(betas);
 
 parfor lambda_idx = 1:numel(lambdas)
     lambda = lambdas(lambda_idx);
@@ -51,14 +54,16 @@ parfor lambda_idx = 1:numel(lambdas)
 
     z0 = zeros(size(C));
 
-    for tau_idx = 1:numel(taus)
-        tau = taus(tau_idx)
+    for tau_idx = 1:num_taus
+        tau = taus(tau_idx);
+        disp(tau_idx)
 
-        for beta_idx = 1:numel(betas)
-            beta = betas(beta_idx)
+        for beta_idx = 1:num_betas
+            beta = betas(beta_idx);
+            disp(beta_idx)
 
             [xStar, objVals, alphas] = gPDHG_wls(z0, proxf, proxgconj, ...
-                f, g, Amat, B, 'maxIter', maxIter, 'tau0', tau, 'verbose', true);
+                f, g, Amat, B, 'maxIter', maxIter, 'tau0', tau,'beta0', beta, 'verbose', false);
     
             obj_vals(lambda_idx, tau_idx, beta_idx, :) = objVals;
             final_vals(lambda_idx, tau_idx, beta_idx, :) = xStar;
