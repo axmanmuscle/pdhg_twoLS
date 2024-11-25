@@ -74,7 +74,7 @@ for lambda_idx = 1:num_lambda
             'g', g, 'A', A, 'normA', normA, 'N', maxIter, 'verbose', false, 'tol', 1e-15);
 
         [xStar_pdhgWLS, objVals_pdhgWLS] = pdhgWLS(z0, proxf, proxgconj, 'beta', 1, ...
-            'tau', tau, 'f', f, 'g', g, 'N', maxIter, 'verbose', false);
+            'tau', tau, 'f', f, 'g', g, 'A', A, 'N', maxIter, 'verbose', false);
 
         S_pdDR = @(in) -tau * Rgtildeconj( Rftilde( in, tau) / tau, 1/tau);
 
@@ -89,7 +89,7 @@ for lambda_idx = 1:num_lambda
         x_gpdhg_all(lambda_idx, tau_idx, :) = xStar_gpdhg;
         x_pdhg_all(lambda_idx, tau_idx, :) = xStar_pdhg;
         x_pdhgWls_all(lambda_idx, tau_idx, :) = xStar_pdhgWLS;
-        x_aoi_all(lambda_idx, tau_idx, :) = xStar_aoi;
+        x_aoi_all(lambda_idx, tau_idx, :) = xStar_aoi(1:n);
 
     end
 end
