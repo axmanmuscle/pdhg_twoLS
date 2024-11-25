@@ -1,18 +1,18 @@
 function run_test_prob_tv_aoiLS()
 %%% let's a total variation denoising problem
+rng(20241125)
 im = imread('cameraman.tif');
 im = double(im) ./ 255;
-
-im = imresize(im, 0.25);
+im = imresize(im, 0.3);
 
 noise = 0.08*randn(size(im));
-noised_im = im + noise;
 
+noised_im = im + noise;
 n = size(noised_im(:), 1);
 
-% show noised image
-figure; imshowscale(noised_im, 5);
+figure; imshowscale(noised_im);
 
+dirStr = "E:\matlab\tvRunData\aoiLs";
 % compute stuff for PDDR line searches
 
 normA = powerIteration(@computeGradient, noised_im);
@@ -28,9 +28,11 @@ m = size(B, 1);
 sizex = size(computeGradient(noised_im));
 % then write the functions for the line search
 
+clear G Bt;
+
 
 % lambdas = linspace(0.001, 5, 100);
-lambdas = 2.^(-6:6);
+lambdas = [0.1];
 for lambda_idx = 1:numel(lambdas)
     x0 = zeros([n + m, 1]);
     lambda = lambdas(lambda_idx);
@@ -72,40 +74,26 @@ for lambda_idx = 1:numel(lambdas)
     best_idx = 0;
     best_obj = Inf;
     
-    gamma_vals = 10.^(-8:4);
+    gamma_vals = 10.^(-4:0.5:4);
     for gamma_idx = 1:numel(gamma_vals)
         disp(gamma_idx);
         %%% define S_pdDR here
         gamma = gamma_vals(gamma_idx);
         S_pdDR = @(in) -gamma * Rgtildeconj( Rftilde( in, gamma ) / gamma , 1/gamma );
         
-        [xStar,objVals_pdhgaoi,alphas] = avgOpIter_wLS( x0(:), S_pdDR, 'N', 300, ...
+        [xStar,objVals_pdhgaoi,alphas] = avgOpIter_wLS( x0(:), S_pdDR, 'N', 200, ...
         'objFunction', objtilde, 'verbose', true, 'printEvery', 1, 'doLineSearchTest', true );
     
         xend = proxf_flat(xStar(1:n), gamma);
-        final_obj = objaf(xend);
 
-        fstr = sprintf('/home/alex/Documents/MATLAB/tvRunData/pdhgAOIls/lambda_%d_gamma_%d', lambda_idx, gamma_idx);
-        objStr = sprintf('%s_obj.mat', fstr);
-        xStr = sprintf('%s_x.mat', fstr);
+        fstr_aoi = sprintf('%s_gamma_%d', dirStr, gamma_idx);
+        objStr_aoi = sprintf('%s_obj.mat', fstr_aoi);
+        xStr_aoi = sprintf('%s_x.mat', fstr_aoi);
 
-        save(objStr, "objVals_pdhgaoi");
-        save(xStr, "xend");
-        if final_obj < best_obj
-            best_idx = gamma_idx;
-            xBest = xend;
-            bestObjs = objVals_pdhgaoi;
-            best_obj = final_obj;
-        end
+        parsave(objStr_aoi, objVals_pdhgaoi);
+        parsave(xStr_aoi, xend);
     end
     
-    figure; imshowscale(resize(xBest, size(noised_im))); title(lstr)
-    
-    figure; plot(bestObjs); title(lstr);
-    disp(best_idx);
-    disp(gamma_vals(best_idx));
-
-    pause(2);
 
 end
 end

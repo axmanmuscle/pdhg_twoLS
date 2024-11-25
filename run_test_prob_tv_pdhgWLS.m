@@ -1,16 +1,18 @@
 function run_test_prob_tv_pdhgWLS()
 %%% let's a total variation denoising problem
-im = imread('cameraman.tif');
-im = double(im) ./ 256;
-im = imresize(im, 0.75);
+rng(20241125)
 
-noise = 0.25*randn(size(im));
+im = imread('cameraman.tif');
+im = double(im) ./ 255;
+im = imresize(im, 0.3);
+
+noise = 0.08*randn(size(im));
 
 noised_im = im + noise;
 
 figure; imshowscale(noised_im);
 
-dirStr = "E:\matlab\tvRunData\pdhgWLS_noise25";
+dirStr = "E:\matlab\tvRunData\pdhgWLS";
 
 % lambdas = linspace(0.001, 5, 100);
 % lambdas = 2.^(-6:6);
@@ -32,7 +34,7 @@ for lambda_idx = 1:numel(lambdas)
     best_idx = 0;
     best_obj = Inf;
     normA = powerIteration(@computeGradient, noised_im);
-    gamma_vals = 10.^(-4:0.25:4);
+    gamma_vals = 10.^(-4:0.5:4);
     parfor gamma_idx = 1:numel(gamma_vals)
         disp(gamma_idx);
         gamma = gamma_vals(gamma_idx);
@@ -41,7 +43,7 @@ for lambda_idx = 1:numel(lambdas)
     
         % xend = proxf(xStar_pdhg, gamma);
 
-        fstr_pdhg = sprintf('%s/gamma_%d', dirStr, gamma_idx);
+        fstr_pdhg = sprintf('%s_gamma_%d', dirStr, gamma_idx);
         objStr_pdhg = sprintf('%s_obj.mat', fstr_pdhg);
         xStr_pdhg = sprintf('%s_x.mat', fstr_pdhg);
 

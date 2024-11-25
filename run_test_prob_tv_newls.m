@@ -1,5 +1,6 @@
 function run_test_prob_tv_newls()
 %%% let's a total variation denoising problem
+rng(20241125)
 vers = version('-release');
 vnum = vers(end-1);
 im = imread('cameraman.tif');
@@ -130,8 +131,8 @@ for lambda_idx = 1:numel(lambdas)
         elseif strcmp(vnum, '3')
             parsave(objStr_new, objVals_newls_new)
             parsave(xStr_new, xStar_new);
-            parsave(objStr_aoi, objVals_pdhgaoi);
-            parsave(xStr_aoi, xStar_aoi);
+            % parsave(objStr_aoi, objVals_pdhgaoi);
+            % parsave(xStr_aoi, xStar_aoi);
         end
         % xend = proxf_flat(xStar(1:n), gamma);
         % final_obj = objaf(xend);

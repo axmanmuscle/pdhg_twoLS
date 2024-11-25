@@ -1,20 +1,22 @@
 function run_test_prob_tv_pdhg()
 %%% let's a total variation denoising problem
-im = imread('cameraman.tif');
-im = double(im) ./ 256;
-im = imresize(im, 0.75);
+rng(20241125)
 
-noise = 0.25*randn(size(im));
+im = imread('cameraman.tif');
+im = double(im) ./ 255;
+im = imresize(im, 0.3);
+
+noise = 0.08*randn(size(im));
 
 noised_im = im + noise;
 
 figure; imshowscale(noised_im);
 
-dirStr = "E:\matlab\tvRunData\pdhg_noise25";
+dirStr = "E:\matlab\tvRunData\pdhg";
 
 % lambdas = linspace(0.001, 5, 100);
 % lambdas = 2.^(-6:6);
-lambdas = [0.05; 0.1; 0.5; 1];
+lambdas = [0.1];
 for lambda_idx = 1:numel(lambdas)
     x0 = zeros(size(noised_im));
     lambda = lambdas(lambda_idx);
