@@ -5,7 +5,7 @@ vnum = vers(end-1);
 im = imread('cameraman.tif');
 im = double(im) ./ 255;
 
-im = imresize(im, 0.4);
+im = imresize(im, 0.3);
 
 noise = 0.08*randn(size(im));
 noised_im = im + noise;

@@ -1,15 +1,21 @@
-rng(20241024)
+rng(20241025)
 num_segments = 5;
 len_segments = 400;
 
-C = 0.9*rand([len_segments 1]) + randi([-5 5]);
+gt = zeros([num_segments*len_segments 1]);
+
+ri = randi([-5 5], [num_segments 1]);
+C = 0.5*randn([len_segments 1]) + ri(1);
+gt(1:len_segments) = ri(1);
 for i = 1:num_segments-1
-    A = 0.9*rand([len_segments 1]) + randi([-2 5]);
+    A = 0.5*randn([len_segments 1]) + ri(i+1);
     C = [C; A];
+    gt(i*len_segments+1 : (i+1)*len_segments) = ri(i+1);
 end
 
 x = 1:num_segments*len_segments;
-% figure; plot(x, C); hold on;
+% figure; plot(x, C, 'DisplayName', 'Noised'); hold on;
+% plot(x, gt, 'DisplayName', 'gt', 'LineWidth', 2)
 n = numel(C);
 
 A = @(in) circshift(in, -1) - in;
@@ -25,15 +31,17 @@ theta = 0.9/norm(Amat)^2;
 Bt = chol((1/theta)*eye(n) - Amat*Amat');
 B = Bt';
 
-clear Bt;
+clear B Bt;
 
 f = @(in) 0.5*norm(in - C, 2)^2;
 proxf = @(x, t) proxL2Sq(x, t, C);
 
-lambdas = [0.01, 0.1, 1, 2, 5, 10, 100, 1000];
+%lambdas = [0.01, 0.1, 1, 2, 5, 10, 100, 1000];
+lambdas = [1];
 
 taus = 10.^(-5:0.5:3);
-betas = 10.^(-1:0.5:1);
+%betas = 10.^(-1:0.5:1);
+betas = [1];
 maxIter = 600;
 
 obj_vals = zeros([numel(lambdas) numel(taus) numel(betas)]);
@@ -45,7 +53,7 @@ final_vals(:, :, :, n) = 0;
 num_taus = numel(taus);
 num_betas = numel(betas);
 
-parfor lambda_idx = 1:numel(lambdas)
+for lambda_idx = 1:numel(lambdas)
     lambda = lambdas(lambda_idx);
 
     g = @(in) lambda * norm(in, 1);
@@ -54,7 +62,7 @@ parfor lambda_idx = 1:numel(lambdas)
 
     z0 = zeros(size(C));
 
-    for tau_idx = 1:num_taus
+    parfor tau_idx = 1:num_taus
         tau = taus(tau_idx);
         disp(tau_idx)
 
@@ -62,13 +70,18 @@ parfor lambda_idx = 1:numel(lambdas)
             beta = betas(beta_idx);
             disp(beta_idx)
 
-            [xStar, objVals, alphas] = gPDHG_wls(z0, proxf, proxgconj, ...
-                f, g, Amat, B, 'maxIter', maxIter, 'tau0', tau,'beta0', beta, 'verbose', false);
-    
+            % [xStar, objVals, alphas] = gPDHG_wls(z0, proxf, proxgconj, ...
+            %     f, g, Amat, B, 'maxIter', maxIter, 'tau0', tau,'beta0', beta, 'verbose', false);
+            [xStar, objVals, alphas] = pdhg(z0, proxf, proxgconj, tau,...
+                'f', f, 'g', g, 'A', Amat, 'normA', 2, 'N', maxIter, 'verbose', false, 'tol', 1e-15);
+
+            % [xStar, objVals] = pdhgWLS(z0, proxf, proxgconj, 'beta', beta, 'tau', tau,...
+            %     'A', Amat, 'f', f, 'g', g, 'N', maxIter, 'verbose', true);
+
             obj_vals(lambda_idx, tau_idx, beta_idx, :) = objVals;
             final_vals(lambda_idx, tau_idx, beta_idx, :) = xStar;
         end
     end
         % figure; plot(xStar_new);
 end
-save tv_1d.mat
+save tv_1d_pdhg_new.mat
