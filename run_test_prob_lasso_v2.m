@@ -40,6 +40,11 @@ objVals_pdhg_all = zeros([num_lambda num_tau maxIter]);
 objVals_pdhgWls_all = zeros([num_lambda num_tau maxIter]);
 objVals_aoi_all = zeros([num_lambda num_tau maxIter]);
 
+x_gpdhg_all = zeros([num_lambda num_tau n]);
+x_pdhg_all = zeros([num_lambda num_tau n]);
+x_pdhgWls_all = zeros([num_lambda num_tau n]);
+x_aoi_all = zeros([num_lambda num_tau n]);
+
 for lambda_idx = 1:num_lambda
     lambda = lambdas(lambda_idx);
 
@@ -79,6 +84,11 @@ for lambda_idx = 1:num_lambda
         objVals_pdhg_all(lambda_idx, tau_idx, :) = objVals_pdhg;
         objVals_pdhgWls_all(lambda_idx, tau_idx, :) = objVals_pdhgWLS;
         objVals_aoi_all(lambda_idx, tau_idx, :) = objVals_aoi;
+
+        x_gpdhg_all(lambda_idx, tau_idx, :) = xStar_gpdhg;
+        x_pdhg_all(lambda_idx, tau_idx, :) = xStar_pdhg;
+        x_pdhgWls_all(lambda_idx, tau_idx, :) = xStar_pdhgWLS;
+        x_aoi_all(lambda_idx, tau_idx, :) = xStar_aoi;
 
     end
 end
