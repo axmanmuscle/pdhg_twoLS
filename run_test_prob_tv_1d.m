@@ -1,5 +1,6 @@
 rng(20241025)
 num_segments = 5;
+
 len_segments = 400;
 
 gt = zeros([num_segments*len_segments 1]);
