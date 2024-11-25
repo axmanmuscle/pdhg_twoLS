@@ -37,7 +37,7 @@ maxIter = 50;
 
 objVals_gpdhg_all = zeros([num_lambda num_tau maxIter]);
 objVals_pdhg_all = zeros([num_lambda num_tau maxIter]);
-objVals_pdhgWls_all = zeros([num_lambda num_tau maxIter]);
+objVals_pdhgWls_all = zeros([num_lambda num_tau maxIter+1]);
 objVals_aoi_all = zeros([num_lambda num_tau maxIter]);
 
 x_gpdhg_all = zeros([num_lambda num_tau n]);
@@ -47,6 +47,7 @@ x_aoi_all = zeros([num_lambda num_tau n]);
 
 for lambda_idx = 1:num_lambda
     lambda = lambdas(lambda_idx);
+    disp(lambda_idx);
 
     proxg = @(in, t) proxL1Complex(in, t*lambda);
     g = @(in) lambda*norm(in, 1);
@@ -64,10 +65,10 @@ for lambda_idx = 1:num_lambda
 
     for tau_idx = 1:num_tau
         x0 = zeros([n+n 1]);
-        tau = taus(tau_idx)
+        tau = taus(tau_idx);
 
         [xStar_gpdhg, objVals_gpdhg] = gPDHG_wls(z0, proxf, proxgconj, f, g, A, ...
-            B, 'maxIter', maxIter, 'tau0', tau, 'beta0', 1, 'verbose', true);
+            B, 'maxIter', maxIter, 'tau0', tau, 'beta0', 1, 'verbose', false);
 
         [xStar_pdhg, objVals_pdhg] = pdhg(z0, proxf, proxgconj, tau, 'f', f, ...
             'g', g, 'A', A, 'normA', normA, 'N', maxIter, 'verbose', false, 'tol', 1e-15);
@@ -78,7 +79,7 @@ for lambda_idx = 1:num_lambda
         S_pdDR = @(in) -tau * Rgtildeconj( Rftilde( in, tau) / tau, 1/tau);
 
         [xStar_aoi,objVals_aoi] = avgOpIter_wLS( x0(:), S_pdDR, 'N', maxIter, ...
-                'objFunction', objtilde, 'verbose', true, 'printEvery', 20, 'doLineSearchTest', true );
+                'objFunction', objtilde, 'verbose', false, 'printEvery', 20, 'doLineSearchTest', true );
 
         objVals_gpdhg_all(lambda_idx, tau_idx, :) = objVals_gpdhg;
         objVals_pdhg_all(lambda_idx, tau_idx, :) = objVals_pdhg;
