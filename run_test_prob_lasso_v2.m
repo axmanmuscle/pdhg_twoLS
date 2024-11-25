@@ -11,7 +11,7 @@ n = 40;
 
 A = randn(n);
 normA = norm(A);
-b = randn([n 1]);
+b = 8 * ones([n 1]);
 
 theta = 0.9/normA^2;
 Bt = chol((1/theta)*eye(n) - A*A');
@@ -94,7 +94,7 @@ for lambda_idx = 1:num_lambda
     end
 end
 
-save lasso_test1.mat
+save lasso_test3.mat
 
 
 end
