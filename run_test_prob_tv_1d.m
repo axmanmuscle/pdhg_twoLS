@@ -31,11 +31,14 @@ end
 theta = 0.9/norm(Amat)^2;
 Bt = chol((1/theta)*eye(n) - Amat*Amat');
 B = Bt';
+m = size(B, 1);
 
-clear B Bt;
+clear Bt;
 
 f = @(in) 0.5*norm(in - C, 2)^2;
 proxf = @(x, t) proxL2Sq(x, t, C);
+
+Rftilde = @(in, t) [proxf(in(1:n), t); zeros([m 1])];
 
 %lambdas = [0.01, 0.1, 1, 2, 5, 10, 100, 1000];
 lambdas = [1];
@@ -61,6 +64,14 @@ for lambda_idx = 1:numel(lambdas)
     ga = @(in) lambda * norm(A(in), 1);
     proxgconj = @(in, t) proxConjL1(in, t, lambda);
 
+    gtilde = @(in) lambda*g(A(in(1:n)) + B*in(n+1:end));
+    objtilde = @(in) f(in(1:n)) + g(in(1:n));
+
+    proxgtilde = @(x, t) x - t*[Amat';B']*proxgconj((theta/t)*(Amat*x(1:n) + B*x(n+1:end)), theta/t);
+    proxgtildeconj = @(x, t) x - proxgtilde(x, t);
+    Rgtilde = @(x, t) 2*proxgtilde(x,t) - x;
+    Rgtildeconj = @(x, t) 2*proxgtildeconj(x, t) - x;
+
     z0 = zeros(size(C));
 
     parfor tau_idx = 1:num_taus
@@ -68,6 +79,7 @@ for lambda_idx = 1:numel(lambdas)
         disp(tau_idx)
 
         for beta_idx = 1:num_betas
+            x0 = zeros([n+m 1]);
             beta = betas(beta_idx);
             disp(beta_idx)
 
@@ -75,6 +87,11 @@ for lambda_idx = 1:numel(lambdas)
             %     f, g, Amat, B, 'maxIter', maxIter, 'tau0', tau,'beta0', beta, 'verbose', false);
             [xStar, objVals, alphas] = pdhg(z0, proxf, proxgconj, tau,...
                 'f', f, 'g', g, 'A', Amat, 'normA', 2, 'N', maxIter, 'verbose', false, 'tol', 1e-15);
+
+            S_pdDR = @(in) -tau * Rgtildeconj( Rftilde( in, tau ) / tau , 1/tau );
+
+            [xStar_aoi,objVals_pdhgaoi,alphas_aoi] = avgOpIter_wLS( x0(:), S_pdDR, 'N', maxIter, ...
+                'objFunction', objtilde, 'verbose', true, 'printEvery', 20, 'doLineSearchTest', true );
 
             % [xStar, objVals] = pdhgWLS(z0, proxf, proxgconj, 'beta', beta, 'tau', tau,...
             %     'A', Amat, 'f', f, 'g', g, 'N', maxIter, 'verbose', true);
@@ -85,4 +102,4 @@ for lambda_idx = 1:numel(lambdas)
     end
         % figure; plot(xStar_new);
 end
-save tv_1d_pdhg_new.mat
+save tv_1d_aoils.mat
