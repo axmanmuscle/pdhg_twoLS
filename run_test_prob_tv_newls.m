@@ -6,12 +6,20 @@ vnum = vers(end-1);
 im = imread('cameraman.tif');
 im = double(im) ./ 255;
 
-im = imresize(im, 0.3);
+%im = imresize(im, 0.3);
 
-noise = 0.08*randn(size(im));
+noise_sig = 1e-1;
+noise = noise_sig*randn(size(im));
 noised_im = im + noise;
 
 n = size(noised_im(:), 1);
+
+%%% salt and pepper noise
+num_snp = round(0.1*n); % 10 % of samples
+indices = randperm(n);
+indices = indices(1:num_snp);
+snp = round(rand([num_snp 1]));
+noised_im(indices) = snp;
 
 % show noised image
 figure; imshowscale(noised_im, 5);
@@ -84,12 +92,12 @@ for lambda_idx = 1:numel(lambdas)
     best_obj = Inf;
     
     gamma_vals = 10.^(-4:0.5:4);
-    parfor gamma_idx = 1:numel(gamma_vals)
+    for gamma_idx = 13
         z0 = zeros([n 1]);
         disp(gamma_idx);
         gamma = gamma_vals(gamma_idx);
         tau = gamma/normA;
-        maxIter = 1000;
+        maxIter = 3000;
         % [xStar, iters, alphas, objVals_newls] = primal_dual_dr_aoi_newls(x0, ...
         %     proxftilde,proxgconj, ftilde, gtilde, maxIter, theta, A, B, gamma);
         % 
@@ -104,7 +112,7 @@ for lambda_idx = 1:numel(lambdas)
         % [xStar_aoi,objVals_pdhgaoi,alphas_aoi] = avgOpIter_wLS( x0(:), S_pdDR, 'N', maxIter, ...
         % 'objFunction', objtilde, 'verbose', true, 'printEvery', 20, 'doLineSearchTest', true );
 
-        fstr_new = sprintf('%s/bothLs_noresize/lambda_%d_gamma_%d', dirStr, lambda_idx, gamma_idx);
+        fstr_new = sprintf('%s/bothLs/lambda_%d_gamma_%d', dirStr, lambda_idx, gamma_idx);
         fstr_old = sprintf('%s/oldLs/lambda_%d_gamma_%d', dirStr, lambda_idx, gamma_idx);
         fstr_aoi = sprintf('%s/aoiLs/lambda_%d_gamma_%d', dirStr, lambda_idx, gamma_idx);
 

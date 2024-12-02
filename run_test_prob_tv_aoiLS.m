@@ -12,7 +12,8 @@ n = size(noised_im(:), 1);
 
 figure; imshowscale(noised_im);
 
-dirStr = "E:\matlab\tvRunData\aoiLs";
+%dirStr = "E:\matlab\tvRunData\aoiLs";
+dirStr = '/home/alex/Documents/MATLAB/tvRunData_new1121/aoiLs/'
 % compute stuff for PDDR line searches
 
 normA = powerIteration(@computeGradient, noised_im);
@@ -75,7 +76,7 @@ for lambda_idx = 1:numel(lambdas)
     best_obj = Inf;
     
     gamma_vals = 10.^(-4:0.5:4);
-    for gamma_idx = 1:numel(gamma_vals)
+    parfor gamma_idx = 1:numel(gamma_vals)
         disp(gamma_idx);
         %%% define S_pdDR here
         gamma = gamma_vals(gamma_idx);

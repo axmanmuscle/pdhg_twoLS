@@ -1,8 +1,8 @@
 % load('kData_knee.mat', 'kData');
-% load('brain.mat', 'd2');
-% kData = d2;
-load('ankle.mat')
-kData = d1;
+load('brain.mat', 'd2');
+kData = d2;
+% load('ankle.mat')
+% kData = d1;
 rng(20240429);
 
 kData = kData./max(abs(kData(:)));
@@ -28,6 +28,9 @@ fftSamples_wavACR = bsxfun( @times, kData, wavMaskACR );
 
 gpdhgRecons = cell(1,1,8);
 pdhgRecons = cell(1,1,8);
+
+gpdhgObjvals = cell(1,1,8);
+pdhgObjvals = cell(1,1,8);
 
 parfor coilIdx = 1:8
     disp(coilIdx);
@@ -57,6 +60,9 @@ parfor coilIdx = 1:8
 
     gpdhgRecons{1, 1, coilIdx} = xStar_gpdhg;
     pdhgRecons{1,1,coilIdx} = xStar_pdhg;
+
+    gpdhgObjvals{1,1,coilIdx} = objVals_gpdhg;
+    pdhgObjVals{1,1,coilIdx} = objVals_pdhg;
 
 
 end

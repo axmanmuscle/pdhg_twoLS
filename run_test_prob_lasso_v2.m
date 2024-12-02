@@ -7,7 +7,7 @@ function run_test_prob_lasso_v2()
 %%% where A is n x n and random
 
 rng(20241014);
-n = 40;
+n = 1000;
 
 A = randn(n);
 normA = norm(A);
@@ -28,12 +28,13 @@ Rftilde = @(in, t) [proxf(in(1:n), t); zeros([n 1])];
 
 z0 = zeros([n 1]);
 
-lambdas = [0.01 0.1 0.5 1 10];
+% lambdas = [0.01 0.1 0.5 1 10];
 taus = 2.^(-4:0.5:4);
+lambdas = [3];
 
 num_lambda = numel(lambdas);
 num_tau = numel(taus);
-maxIter = 50;
+maxIter = 5000;
 
 objVals_gpdhg_all = zeros([num_lambda num_tau maxIter]);
 objVals_pdhg_all = zeros([num_lambda num_tau maxIter]);
@@ -63,7 +64,7 @@ for lambda_idx = 1:num_lambda
     Rgtilde = @(x, t) 2*proxgtilde(x,t) - x;
     Rgtildeconj = @(x, t) 2*proxgtildeconj(x, t) - x;
 
-    for tau_idx = 1:num_tau
+    parfor tau_idx = 9
         x0 = zeros([n+n 1]);
         tau = taus(tau_idx);
 
@@ -94,7 +95,7 @@ for lambda_idx = 1:num_lambda
     end
 end
 
-save lasso_test3.mat
+save lasso_test5.mat
 
 
 end
