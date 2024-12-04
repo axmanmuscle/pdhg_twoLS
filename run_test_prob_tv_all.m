@@ -109,7 +109,7 @@ for lambda_idx = 1:num_lambdas
 
     proxgtilde = @(x, t) x - t*[A';B']*proxgconj((theta/t)*(A*x(1:n) + B*x(n+1:end)), theta/t);
     proxgtildeconj = @(x, t) x - proxgtilde(x, t);
-    Rftilde = @(x, t) 2*resize(proxftilde(x,t), size(x)) - x;
+    Rftilde = @(x, t) 2*proxftilde(x,t) - x;
     Rgtilde = @(x, t) 2*proxgtilde(x,t) - x;
     Rgtildeconj = @(x, t) 2*proxgtildeconj(x, t) - x;
     
@@ -137,13 +137,14 @@ for lambda_idx = 1:num_lambdas
         [xStar_aoi,objVals_aoi] = avgOpIter_wLS( x0(:), S_pdDR, 'N', maxIter, ...
                 'objFunction', objtilde, 'verbose', false, 'printEvery', 20, 'doLineSearchTest', true );
 
+        xStar_aoi_final = proxftilde(xStar_aoi, tau);
 
         aoi_objvals(lambda_idx, gamma_idx, :) = objVals_aoi;
         pdhg_objvals(lambda_idx, gamma_idx, :) = objVals_pdhg;
         gpdhg_objvals(lambda_idx, gamma_idx, :) = objVals_gpdhg;
         pdhgwls_objvals(lambda_idx, gamma_idx, :) = objVals_pdhgWLS;
 
-        aoi_finalvals(lambda_idx, gamma_idx, :) = xStar_aoi(1:n);
+        aoi_finalvals(lambda_idx, gamma_idx, :) = xStar_aoi_final(1:n);
         pdhg_finalvals(lambda_idx, gamma_idx, :) = xStar_pdhg;
         gpdhg_finalvals(lambda_idx, gamma_idx, :) = xStar_gpdhg;
         pdhgwls_finalvals(lambda_idx, gamma_idx, :) = xStar_pdhgWLS; 
@@ -152,6 +153,7 @@ for lambda_idx = 1:num_lambdas
 end
 clear A B;
 save tv2d_all_1204.mat
+
 end
 
 function out = deltay(x)
