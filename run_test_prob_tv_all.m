@@ -47,7 +47,7 @@ sizex = size(computeGradient(noised_im));
 % lambdas = linspace(0.001, 5, 100);
 lambdas = 2.^(-2:1:2);
 gammas = 10.^(-4:0.5:4);
-maxIter = 3000;
+maxIter = 800;
 
 num_lambdas = numel(lambdas);
 num_gammas = numel(gammas);
@@ -62,11 +62,11 @@ pdhg_finalvals = zeros([num_lambdas num_gammas n]);
 gpdhg_objvals = zeros([num_lambdas num_gammas maxIter]);
 gpdhg_finalvals = zeros([num_lambdas num_gammas n]);
 
-pdhgwls_objvals = zeros([num_lambdas num_gammas maxIter]);
+pdhgwls_objvals = zeros([num_lambdas num_gammas maxIter+1]);
 pdhgwls_finalvals = zeros([num_lambdas num_gammas n]);
 
 
-for lambda_idx = 1:num_lambdas
+parfor lambda_idx = 1:num_lambdas
     x0 = zeros([n + m, 1]);
     lambda = lambdas(lambda_idx);
     lstr = sprintf('lambda %f', lambda);
@@ -92,11 +92,11 @@ for lambda_idx = 1:num_lambdas
     proxf_flat = @(x, t) proxL2Sq(x, t, noised_im(:));
 
     proxftilde = @(x, t) [proxf_flat(x(1:n), t); zeros(size(x(n+1:end)))];
-    objtilde = @(x) ftilde(proxftilde(x, 1)) + gtilde(proxftilde(x, 1));
+    
 
     proxgtilde = @(x, t) x - t*[A';B']*proxgconj((theta/t)*(A*x(1:n) + B*x(n+1:end)), theta/t);
     proxgtildeconj = @(x, t) x - proxgtilde(x, t);
-    Rftilde = @(x, t) 2*resize(proxftilde(x,t), size(x)) - x;
+    Rftilde = @(x, t) 2*proxftilde(x,t) - x;
     Rgtilde = @(x, t) 2*proxgtilde(x,t) - x;
     Rgtildeconj = @(x, t) 2*proxgtildeconj(x, t) - x;
     
@@ -106,37 +106,40 @@ for lambda_idx = 1:num_lambdas
     for gamma_idx = 1:num_gammas
         z0 = zeros([n 1]);
         disp(gamma_idx);
-        gamma = gamma_vals(gamma_idx);
+        gamma = gammas(gamma_idx);
         tau = gamma/normA;
 
-        [xStar_gpdhg, objVals_gpdhg] = gPDHG_wls(z0, proxf, proxgconj, fflat, g, A, ...
-            B, 'maxIter', maxIter, 'tau0', tau, 'verbose', false);
+        objtilde = @(x) ftilde(proxftilde(x, tau)) + gtilde(proxftilde(x, tau));
 
-        [xStar_pdhg, objVals_pdhg] = pdhg(z0, proxf, proxgconj, tau, 'f', f, ...
-            'g', g, 'A', A, 'normA', normA, 'N', maxIter, 'verbose', false, 'tol', 0);
+        [xStar_gpdhg, objVals_gpdhg] = gPDHG_wls(z0, proxf_flat, proxgconj, fflat, g, A, ...
+            B, 'maxIter', maxIter, 'tau0', tau, 'verbose', true);
 
-        [xStar_pdhgWLS, objVals_pdhgWLS] = pdhgWLS(z0, proxf, proxgconj, 'beta', 1, ...
-            'tau', tau, 'f', f, 'g', g, 'A', A, 'N', maxIter, 'verbose', false);
+        [xStar_pdhg, objVals_pdhg] = pdhg(z0, proxf_flat, proxgconj, tau, 'f', fflat, ...
+            'g', g, 'A', @computeGradient, 'normA', normA, 'N', maxIter, 'verbose', true, 'tol', 1e-50);
+
+        [xStar_pdhgWLS, objVals_pdhgWLS] = pdhgWLS(z0, proxf_flat, proxgconj, 'beta', 1, ...
+            'tau', tau, 'f', fflat, 'g', g, 'A', @computeGradient, 'N', maxIter, 'verbose', false);
 
         S_pdDR = @(in) -tau * Rgtildeconj( Rftilde( in, tau) / tau, 1/tau);
 
         [xStar_aoi,objVals_aoi] = avgOpIter_wLS( x0(:), S_pdDR, 'N', maxIter, ...
                 'objFunction', objtilde, 'verbose', false, 'printEvery', 20, 'doLineSearchTest', true );
 
+        xStar_aoi_final = proxftilde(xStar_aoi, tau);
 
         aoi_objvals(lambda_idx, gamma_idx, :) = objVals_aoi;
         pdhg_objvals(lambda_idx, gamma_idx, :) = objVals_pdhg;
         gpdhg_objvals(lambda_idx, gamma_idx, :) = objVals_gpdhg;
         pdhgwls_objvals(lambda_idx, gamma_idx, :) = objVals_pdhgWLS;
 
-        aoi_finalvals(lambda_idx, gamma_idx, :) = xStar_aoi(1:n);
+        aoi_finalvals(lambda_idx, gamma_idx, :) = xStar_aoi_final(1:n);
         pdhg_finalvals(lambda_idx, gamma_idx, :) = xStar_pdhg;
         gpdhg_finalvals(lambda_idx, gamma_idx, :) = xStar_gpdhg;
         pdhgwls_finalvals(lambda_idx, gamma_idx, :) = xStar_pdhgWLS; 
     end
 
 end
-
+clear A B;
 save tv2d_all_1202.mat
 end
 
