@@ -6,7 +6,7 @@ len_segments = 400;
 gt = zeros([num_segments*len_segments 1]);
 
 ri = randi([-5 5], [num_segments 1]);
-C = 0.5*randn([len_segments 1]) + ri(1);
+C = 0.25*randn([len_segments 1]) + ri(1);
 gt(1:len_segments) = ri(1);
 for i = 1:num_segments-1
     A = 0.5*randn([len_segments 1]) + ri(i+1);
@@ -41,22 +41,22 @@ proxf = @(x, t) proxL2Sq(x, t, C);
 Rftilde = @(in, t) [proxf(in(1:n), t); zeros([m 1])];
 
 %lambdas = [0.01, 0.1, 1, 2, 5, 10, 100, 1000];
-lambdas = [1];
+lambdas = [10];
 
-% taus = 10.^(-5:0.5:3);
+taus = 10.^(-5:0.5:3);
 %betas = 10.^(-1:0.5:1);
-taus = [10^-.5];
+% taus = [10^-.5];
 betas = [1];
-maxIter = 5000;
+maxIter = 1000;
 
-obj_vals = zeros([numel(lambdas) numel(taus) numel(betas)]);
-obj_vals(:, :, :, maxIter) = 0;
+obj_vals = zeros([numel(taus) ]);
+obj_vals( :, maxIter) = 0;
 
-final_vals = zeros([numel(lambdas) numel(taus) numel(betas)]);
-final_vals(:, :, :, n) = 0;
+final_vals = zeros([numel(taus) ]);
+final_vals(:, n) = 0;
 
 num_taus = numel(taus);
-num_betas = numel(betas);
+%num_betas = numel(betas);
 
 for lambda_idx = 1:numel(lambdas)
     lambda = lambdas(lambda_idx);
@@ -79,28 +79,24 @@ for lambda_idx = 1:numel(lambdas)
         tau = taus(tau_idx);
         disp(tau_idx)
 
-        for beta_idx = 1:num_betas
-            x0 = zeros([n+m 1]);
-            beta = betas(beta_idx);
-            disp(beta_idx)
+        x0 = zeros([n+m 1]);
+        % 
+        % [xStar, objVals, alphas] = gPDHG_wls(z0, proxf, proxgconj, ...
+        %     f, g, Amat, B, 'maxIter', maxIter, 'tau0', tau,'beta0', 1, 'verbose', true);
+        % [xStar, objVals, alphas] = pdhg(z0, proxf, proxgconj, tau,...
+        %     'f', f, 'g', g, 'A', Amat, 'normA', 2, 'N', maxIter, 'verbose', false, 'tol', 1e-15);
 
-            [xStar, objVals, alphas] = gPDHG_wls(z0, proxf, proxgconj, ...
-                f, g, Amat, B, 'maxIter', maxIter, 'tau0', tau,'beta0', beta, 'verbose', true);
-            % [xStar, objVals, alphas] = pdhg(z0, proxf, proxgconj, tau,...
-            %     'f', f, 'g', g, 'A', Amat, 'normA', 2, 'N', maxIter, 'verbose', false, 'tol', 1e-15);
+        S_pdDR = @(in) -tau * Rgtildeconj( Rftilde( in, tau ) / tau , 1/tau );
 
-            % S_pdDR = @(in) -tau * Rgtildeconj( Rftilde( in, tau ) / tau , 1/tau );
-            % 
-            % [xStar_aoi,objVals_pdhgaoi,alphas_aoi] = avgOpIter_wLS( x0(:), S_pdDR, 'N', maxIter, ...
-            %     'objFunction', objtilde, 'verbose', true, 'printEvery', 20, 'doLineSearchTest', true );
+        [xStar,objVals,alphas_aoi] = avgOpIter_wLS( x0(:), S_pdDR, 'N', maxIter, ...
+            'objFunction', objtilde, 'verbose', true, 'printEvery', 20, 'doLineSearchTest', true );
 
-            % [xStar, objVals] = pdhgWLS(z0, proxf, proxgconj, 'beta', beta, 'tau', tau,...
-            %     'A', Amat, 'f', f, 'g', g, 'N', maxIter, 'verbose', true);
+        % [xStar, objVals] = pdhgWLS(z0, proxf, proxgconj, 'beta', beta, 'tau', tau,...
+        %     'A', Amat, 'f', f, 'g', g, 'N', maxIter, 'verbose', true);
 
-            obj_vals(lambda_idx, tau_idx, beta_idx, :) = objVals;
-            final_vals(lambda_idx, tau_idx, beta_idx, :) = xStar;
-        end
+        obj_vals(tau_idx, :) = objVals;
+        final_vals(tau_idx, :) = xStar(1:n);
     end
         % figure; plot(xStar_new);
 end
-save tv_1d_optimal.mat
+save tv_1d_aoi_lambda10.mat
