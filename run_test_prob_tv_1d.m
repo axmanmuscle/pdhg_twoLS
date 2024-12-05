@@ -38,19 +38,22 @@ clear Bt;
 f = @(in) 0.5*norm(in - C, 2)^2;
 proxf = @(x, t) proxL2Sq(x, t, C);
 
-Rftilde = @(in, t) [proxf(in(1:n), t); zeros([m 1])];
+proxftilde = @(in, t) [proxf(in(1:n), t); zeros([m 1])];
+
+Rftilde = @(in, t) 2*proxftilde(in, t) - in;
+
 
 %lambdas = [0.01, 0.1, 1, 2, 5, 10, 100, 1000];
 lambdas = [10];
 
-taus = 10.^(-5:0.5:3);
+% taus = 10.^(-5:0.5:3);
 %betas = 10.^(-1:0.5:1);
-% taus = [10^-.5];
+taus = [10^-.5];
 betas = [1];
-maxIter = 1000;
+maxIter = 10000;
 
 obj_vals = zeros([numel(taus) ]);
-obj_vals( :, maxIter) = 0;
+obj_vals( :, maxIter+1) = 0;
 
 final_vals = zeros([numel(taus) ]);
 final_vals(:, n) = 0;
@@ -80,7 +83,7 @@ for lambda_idx = 1:numel(lambdas)
         disp(tau_idx)
 
         x0 = zeros([n+m 1]);
-        % 
+
         % [xStar, objVals, alphas] = gPDHG_wls(z0, proxf, proxgconj, ...
         %     f, g, Amat, B, 'maxIter', maxIter, 'tau0', tau,'beta0', 1, 'verbose', true);
         % [xStar, objVals, alphas] = pdhg(z0, proxf, proxgconj, tau,...
@@ -91,7 +94,7 @@ for lambda_idx = 1:numel(lambdas)
         [xStar,objVals,alphas_aoi] = avgOpIter_wLS( x0(:), S_pdDR, 'N', maxIter, ...
             'objFunction', objtilde, 'verbose', true, 'printEvery', 20, 'doLineSearchTest', true );
 
-        % [xStar, objVals] = pdhgWLS(z0, proxf, proxgconj, 'beta', beta, 'tau', tau,...
+        % [xStar, objVals] = pdhgWLS(z0, proxf, proxgconj, 'beta', 1, 'tau', tau,...
         %     'A', Amat, 'f', f, 'g', g, 'N', maxIter, 'verbose', true);
 
         obj_vals(tau_idx, :) = objVals;
@@ -99,4 +102,4 @@ for lambda_idx = 1:numel(lambdas)
     end
         % figure; plot(xStar_new);
 end
-save tv_1d_aoi_lambda10.mat
+save tv_1d_pdhgwls_lambda10.mat
