@@ -46,14 +46,14 @@ Rftilde = @(in, t) 2*proxftilde(in, t) - in;
 %lambdas = [0.01, 0.1, 1, 2, 5, 10, 100, 1000];
 lambdas = [10];
 
-% taus = 10.^(-5:0.5:3);
+taus = 10.^(-5:0.5:3);
 %betas = 10.^(-1:0.5:1);
-taus = [10^-.5];
+%taus = [10^-.5];
 betas = [1];
-maxIter = 10000;
+maxIter = 2000;
 
 obj_vals = zeros([numel(taus) ]);
-obj_vals( :, maxIter+1) = 0;
+obj_vals( :, maxIter) = 0;
 
 final_vals = zeros([numel(taus) ]);
 final_vals(:, n) = 0;
@@ -69,7 +69,7 @@ for lambda_idx = 1:numel(lambdas)
     proxgconj = @(in, t) proxConjL1(in, t, lambda);
 
     gtilde = @(in) lambda*g(A(in(1:n)) + B*in(n+1:end));
-    objtilde = @(in) f(in(1:n)) + g(in(1:n));
+    
 
     proxgtilde = @(x, t) x - t*[Amat';B']*proxgconj((theta/t)*(Amat*x(1:n) + B*x(n+1:end)), theta/t);
     proxgtildeconj = @(x, t) x - proxgtilde(x, t);
@@ -78,9 +78,10 @@ for lambda_idx = 1:numel(lambdas)
 
     z0 = zeros(size(C));
 
-    for tau_idx = 1:num_taus
+    parfor tau_idx = 1:num_taus
         tau = taus(tau_idx);
         disp(tau_idx)
+        objtilde = @(in) f(proxf(in(1:n), tau)) + gtilde(proxftilde(in, tau));
 
         x0 = zeros([n+m 1]);
 
@@ -98,8 +99,8 @@ for lambda_idx = 1:numel(lambdas)
         %     'A', Amat, 'f', f, 'g', g, 'N', maxIter, 'verbose', true);
 
         obj_vals(tau_idx, :) = objVals;
-        final_vals(tau_idx, :) = xStar(1:n);
+        final_vals(tau_idx, :) = proxf(xStar(1:n), tau);
     end
         % figure; plot(xStar_new);
 end
-save tv_1d_pdhgwls_lambda10.mat
+save tv_1d_pdhgwls_lambda10_new.mat
