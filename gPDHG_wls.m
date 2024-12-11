@@ -45,7 +45,6 @@ function [xOut, objVals, alphasUsed] = gPDHG_wls( x0, proxf, proxgconj, f, g, A,
   end
 
   
-  % objFun = @(x) f(proxf(x, gamma)) + g(applyA(proxf(x, gamma)));
   objFun = @(x) f(x) + g( applyA(x) );
   
   doLineSearch = true;
@@ -62,17 +61,19 @@ function [xOut, objVals, alphasUsed] = gPDHG_wls( x0, proxf, proxgconj, f, g, A,
   alphas = alpha0 .* ( alpha_change.^(0:k) );
   alphas(end) = alpha_bar;
   
-  S = @(xIn, zIn, tauk, alpha) applyS_pdhgwLS_op(xIn, zIn, proxf, proxgconj, beta0, tauk, alpha, applyA, applyAt, applyBt);
+  S = @(xIn, zIn, tauk, alpha, thetak) applyS_pdhgwLS_op(xIn, zIn, proxf, proxgconj, beta0, tauk, thetak, alpha, applyA, applyAt, applyBt);
 
   nAlphas = numel( alphas );
   normRks = zeros( nAlphas, 1 );
   tauks = cell( 1, nAlphas );
   xks = cell( 1, nAlphas );
   zks = cell( 1, nAlphas );
+  thetaks = cell(1, nAlphas);
 
   tauk = tau0;
   xOut = x0;
   zOut = z0;
+  thetak = 1;
   
   normRk = sqrt( real( dotP(x0, x0) ) );
   
@@ -86,13 +87,14 @@ function [xOut, objVals, alphasUsed] = gPDHG_wls( x0, proxf, proxgconj, f, g, A,
               alpha = alphas( alphaIndx );
               % this is eq (6) in Boyd's LS paper
               % performs xkp1 = xk + alphak(Sxk - xk)
-              [xOutp1, zOutp1, taukp1, ~] = S(xOut, zOut, tauk, alpha);
+              [xOutp1, zOutp1, taukp1, ~, thetakp1] = S(xOut, zOut, tauk, alpha, thetak);
 
               % this now gets the next step, rkalpha = Sxk+1 - xk+1
-              [xOutAlpha, zOutAlpha, taukAlpha, nrkAlpha] = S(xOutp1, zOutp1, taukp1, alpha);
+              [xOutAlpha, zOutAlpha, taukAlpha, nrkAlpha, thetaAlpha] = S(xOutp1, zOutp1, taukp1, alpha, thetakp1);
               tauks{alphaIndx} = taukAlpha;
               xks{alphaIndx} = xOutAlpha;
               zks{alphaIndx} = zOutAlpha;
+              thetaks{alphaIndx} = thetaAlpha;
               
               normRks( alphaIndx ) = nrkAlpha;
           end
@@ -106,12 +108,13 @@ function [xOut, objVals, alphasUsed] = gPDHG_wls( x0, proxf, proxgconj, f, g, A,
           xOut = xks{ bestAlphaIndx };
           zOut = zks{ bestAlphaIndx };
           normRk = normRks(bestAlphaIndx);
+          thetak = thetaks{bestAlphaIndx};
   
       else
   
           alphaUsed = alpha_bar;
           % xk = xk + alpha_bar * rk;
-          [xOut, zOut, tauk, normRk] = S(xOut, zOut, tauk, alpha_bar);
+          [xOut, zOut, tauk, normRk, thetak] = S(xOut, zOut, tauk, alpha_bar, thetak);
       end
   
       objValue = objFun( xOut );

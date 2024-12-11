@@ -12,7 +12,7 @@ scaled_im = double(im) - minim;
 mim = max(scaled_im, [], 'all');
 im =  scaled_im ./ mim;
 
-im = imresize(im, 0.3);
+im = imresize(im, 0.2);
 
 noise_sig = 0.05;
 noise = noise_sig*randn(size(im));
@@ -57,10 +57,10 @@ sizex = size(computeGradient(noised_im));
 % lambdas = 2.^(1:1:8);
 % lambdas = [0.01 0.05 0.1 0.15 0.175 0.2]
 % lambdas = [0.01 0.02 0.03 0.05 0.2];
-lambdas = [0.03];
-% gammas = 10.^(-4:0.5:4);
-gammas = [10^-0.5];
-maxIter = 100;
+lambdas = [0.03 0.2];
+gammas = 10.^(-4:0.5:4);
+%gammas = [10^-0.5];
+maxIter = 500;
 
 num_lambdas = numel(lambdas);
 num_gammas = numel(gammas);
@@ -80,7 +80,7 @@ pdhgwls_finalvals = zeros([num_lambdas num_gammas n]);
 
 
 for lambda_idx = 1:num_lambdas
-    % x0 = zeros([n + m, 1]);
+    x0 = zeros([n + m, 1]);
     lambda = lambdas(lambda_idx);
     lstr = sprintf('lambda %f', lambda);
     disp(lstr);
@@ -116,7 +116,7 @@ for lambda_idx = 1:num_lambdas
     best_idx = 0;
     best_obj = Inf;
    
-    for gamma_idx = 1:num_gammas
+    parfor gamma_idx = 1:num_gammas
         z0 = zeros([n 1]);
         disp(gamma_idx);
         gamma = gammas(gamma_idx);
@@ -152,7 +152,7 @@ for lambda_idx = 1:num_lambdas
 
 end
 clear A B;
-save tv2d_all_1204.mat
+save tv2d_1204_fixed.mat aoi_objvals pdhg_objvals gpdhg_objvals pdhgwls_objvals aoi_finalvals pdhg_finalvals gpdhg_finalvals pdhgwls_finalvals
 
 end
 

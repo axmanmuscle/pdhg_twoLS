@@ -9,6 +9,7 @@ function [recon, objValues] =  mri_reconCSPFHomodyne(kData, sFSR, varargin )
   p.addParameter( 'printEvery', 1, @ispositive );
   p.addParameter( 'wavSplit', [], @isnumeric );
   p.addParameter( 'tau0', 1, @isnumeric );
+  p.addParameter( 'beta0', 1, @isnumeric );
   p.parse( varargin{:} );
   alg = p.Results.alg;
   doChecks = p.Results.doChecks;
@@ -17,6 +18,7 @@ function [recon, objValues] =  mri_reconCSPFHomodyne(kData, sFSR, varargin )
   printEvery = p.Results.printEvery;
   wavSplit = p.Results.wavSplit;
   tau0 = p.Results.tau0;
+  beta0 = p.Results.beta0;
   
   sImg = [ size( kData, 1 ) size( kData, 2 ) ];
   if numel( wavSplit ) == 0
@@ -193,11 +195,11 @@ function [recon, objValues] =  mri_reconCSPFHomodyne(kData, sFSR, varargin )
   z0 = zeros( sMask );
   x0 = [ k0; z0(:) ];
 
-  %normA = [];
-  %if numel( gamma ) == 0
-  %  normA = powerIteration( @applyA, rand( size( k0 ) ) );
-  %  gamma = 1 / normA;
-  %end
+  normA = [];
+  if numel( gamma ) == 0
+   normA = powerIteration( @applyA, rand( size( k0 ) ) );
+   gamma = 1 / normA;
+  end
 
   switch alg
 
@@ -211,8 +213,10 @@ function [recon, objValues] =  mri_reconCSPFHomodyne(kData, sFSR, varargin )
               'objFunction', objF, 'verbose', true, 'printEvery', printEvery );
 
       case 'pdhg'
-          tau = gamma;
+          %tau = gamma;
           normA = powerIteration( @applyA, rand( size( k0 ) ) );
+          % tau = 1d-1/normA;
+          tau = gamma;
           [kStar,objValues] = pdhg( k0, @proxf, @proxgConj, tau, 'A', @applyA, 'normA', normA, 'sigma', gamma, ...
               'N', N, 'f', @f, 'g', @g, 'verbose', true, 'printEvery', printEvery );
           xStar = zeros( size( x0 ) );
@@ -232,12 +236,22 @@ function [recon, objValues] =  mri_reconCSPFHomodyne(kData, sFSR, varargin )
           [xStar,objValues,alphas] = avgOpIter_wLS( x0, @S_pdDR, 'N', N, ...
               'objFunction', objF, 'verbose', true, 'printEvery', 1, 'doLineSearchTest', true );   %#ok<ASGLU>
 
+      case 'pdhg_wls'
+          %tau = gamma;
+          %normA = powerIteration( @applyA, rand( size( k0 ) ) );
+          % tau = 1d-1/normA;
+          %tau0 = tau0/normA;
+          [kStar,objValues] = pdhgWLS( k0, @proxf, @proxgConj, 'tau', tau0, 'A', @applyA, ...
+              'N', N, 'f', @f, 'g', @g, 'verbose', true, 'beta', 1 );
+          xStar = zeros( size( x0 ) );
+          xStar( 1 : nUnknown ) = kStar;
+
       case 'gpdhg'
           normA = powerIteration( @applyA, rand( size( k0 ) ) );
-          tau0 = tau0/normA;
+          %tau0 = tau0/normA;
           objF = @(x) f_tilde( proxf_tilde(x) ) + g_tilde( proxf_tilde(x) );
           [xStar,objValues,alphas] = gPDHG_wls( k0, @proxf, @proxgConj, @f, @g, ...
-              @applyA, @applyB, 'tau0', tau0, 'maxIter', N, 'verbose', true);
+              @applyA, @applyB, 'beta0', beta0, 'tau0', tau0, 'maxIter', N, 'verbose', true);
       otherwise
           error( 'Unrecognized algorithm' );
   end

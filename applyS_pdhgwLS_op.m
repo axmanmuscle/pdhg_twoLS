@@ -1,4 +1,4 @@
-function [xOut, zOut, tau, nsxmx] = applyS_pdhgwLS_op(xIn, zIn, proxf, proxgconj, beta, taukm1, alpha, A, At, Bt)
+function [xOut, zOut, tau, nsxmx, thetak] = applyS_pdhgwLS_op(xIn, zIn, proxf, proxgconj, beta, taukm1, thetakm1, alpha, A, At, Bt)
 % this applyS will do PDHG iterations with Malitsky's line search
 
 %%% line search params
@@ -12,13 +12,16 @@ xLast2 = -taukm1 * Bt(zIn);
 
 xk = proxf( xIn - taukm1 * At( zIn ), taukm1 );
 
-tauk = taukm1;
+tauk = taukm1 * sqrt(1+thetakm1);
 
-complexNorm = @(x) real( dotP( x(:), x(:) ) );
+complexNorm = @(x) sqrt( real( dotP( x(:), x(:) ) ) );
 
 if runLineSearch
     accept = false;
+    subiter = 1;
     while ~accept
+        %fprintf('gpdhg wls subiter %d tau %f\n', subiter, tauk)
+        subiter = subiter + 1;
         thetak = tauk / taukm1;
         xbar_k = xk + thetak*(xk - xIn);
         zkp1 = proxgconj(zIn + beta * tauk * A(xbar_k), beta*tauk);
@@ -32,7 +35,7 @@ if runLineSearch
     
         tmpR = zkp1 - zIn;
         if isreal( tmpR )
-          right_term = delta * norm( zkp1 - zIn );
+          right_term = delta * norm( zkp1(:) - zIn(:) );
         else
           right_term = delta * complexNorm( zkp1 - zIn );
         end
@@ -48,7 +51,7 @@ else
     xbar_k = xk + thetak*(xk - xIn);
     zkp1 = proxgconj(zIn + beta * tauk * A(xbar_k), beta*tauk);
 end
-xOut = (1-2*alpha)*xIn + 2*alpha*xbar_k;
+xOut = (1-2*alpha)*xIn + 2*alpha*xk;
 zOut = (1-2*alpha)*zIn + 2*alpha*zkp1;
 
 xNew1 = xOut - taukm1 * At( zOut );

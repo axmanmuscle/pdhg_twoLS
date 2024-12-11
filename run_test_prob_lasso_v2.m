@@ -34,7 +34,7 @@ lambdas = [3];
 
 num_lambda = numel(lambdas);
 num_tau = numel(taus);
-maxIter = 5000;
+maxIter = 100;
 
 objVals_gpdhg_all = zeros([num_lambda num_tau maxIter]);
 objVals_pdhg_all = zeros([num_lambda num_tau maxIter]);
@@ -64,18 +64,18 @@ for lambda_idx = 1:num_lambda
     Rgtilde = @(x, t) 2*proxgtilde(x,t) - x;
     Rgtildeconj = @(x, t) 2*proxgtildeconj(x, t) - x;
 
-    parfor tau_idx = 9
+    for tau_idx = 9
         x0 = zeros([n+n 1]);
         tau = taus(tau_idx);
 
         [xStar_gpdhg, objVals_gpdhg] = gPDHG_wls(z0, proxf, proxgconj, f, g, A, ...
-            B, 'maxIter', maxIter, 'tau0', tau, 'beta0', 1, 'verbose', false);
+            B, 'maxIter', maxIter, 'tau0', tau, 'beta0', 1, 'verbose', true);
 
         [xStar_pdhg, objVals_pdhg] = pdhg(z0, proxf, proxgconj, tau, 'f', f, ...
             'g', g, 'A', A, 'normA', normA, 'N', maxIter, 'verbose', false, 'tol', 1e-15);
 
         [xStar_pdhgWLS, objVals_pdhgWLS] = pdhgWLS(z0, proxf, proxgconj, 'beta', 1, ...
-            'tau', tau, 'f', f, 'g', g, 'A', A, 'N', maxIter, 'verbose', false);
+            'tau', tau, 'f', f, 'g', g, 'A', A, 'N', maxIter, 'verbose', true);
 
         S_pdDR = @(in) -tau * Rgtildeconj( Rftilde( in, tau) / tau, 1/tau);
 
