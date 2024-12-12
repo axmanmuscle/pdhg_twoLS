@@ -44,13 +44,13 @@ Rftilde = @(in, t) 2*proxftilde(in, t) - in;
 
 
 %lambdas = [0.01, 0.1, 1, 2, 5, 10, 100, 1000];
-lambdas = [10];
+lambda = 10;
 
 taus = 10.^(-5:0.5:3);
 %betas = 10.^(-1:0.5:1);
 %taus = [10^-.5];
 betas = [1];
-maxIter = 2000;
+maxIter = 3000;
 
 obj_vals = zeros([numel(taus) ]);
 obj_vals( :, maxIter) = 0;
@@ -61,46 +61,43 @@ final_vals(:, n) = 0;
 num_taus = numel(taus);
 %num_betas = numel(betas);
 
-for lambda_idx = 1:numel(lambdas)
-    lambda = lambdas(lambda_idx);
 
-    g = @(in) lambda * norm(in, 1);
-    ga = @(in) lambda * norm(A(in), 1);
-    proxgconj = @(in, t) proxConjL1(in, t, lambda);
+g = @(in) lambda * norm(in, 1);
+ga = @(in) lambda * norm(A(in), 1);
+proxgconj = @(in, t) proxConjL1(in, t, lambda);
 
-    gtilde = @(in) lambda*g(A(in(1:n)) + B*in(n+1:end));
-    
+gtilde = @(in) lambda*g(A(in(1:n)) + B*in(n+1:end));
 
-    proxgtilde = @(x, t) x - t*[Amat';B']*proxgconj((theta/t)*(Amat*x(1:n) + B*x(n+1:end)), theta/t);
-    proxgtildeconj = @(x, t) x - proxgtilde(x, t);
-    Rgtilde = @(x, t) 2*proxgtilde(x,t) - x;
-    Rgtildeconj = @(x, t) 2*proxgtildeconj(x, t) - x;
 
-    z0 = zeros(size(C));
+proxgtilde = @(x, t) x - t*[Amat';B']*proxgconj((theta/t)*(Amat*x(1:n) + B*x(n+1:end)), theta/t);
+proxgtildeconj = @(x, t) x - proxgtilde(x, t);
+Rgtilde = @(x, t) 2*proxgtilde(x,t) - x;
+Rgtildeconj = @(x, t) 2*proxgtildeconj(x, t) - x;
 
-    parfor tau_idx = 1:num_taus
-        tau = taus(tau_idx);
-        disp(tau_idx)
-        objtilde = @(in) f(proxf(in(1:n), tau)) + gtilde(proxftilde(in, tau));
+z0 = zeros(size(C));
 
-        x0 = zeros([n+m 1]);
+parfor tau_idx = 1:num_taus
+    tau = taus(tau_idx);
+    disp(tau_idx)
+    objtilde = @(in) f(proxf(in(1:n), tau)) + gtilde(proxftilde(in, tau));
 
-        % [xStar, objVals, alphas] = gPDHG_wls(z0, proxf, proxgconj, ...
-        %     f, g, Amat, B, 'maxIter', maxIter, 'tau0', tau,'beta0', 1, 'verbose', true);
-        % [xStar, objVals, alphas] = pdhg(z0, proxf, proxgconj, tau,...
-        %     'f', f, 'g', g, 'A', Amat, 'normA', 2, 'N', maxIter, 'verbose', false, 'tol', 1e-15);
+    x0 = zeros([n+m 1]);
 
-        S_pdDR = @(in) -tau * Rgtildeconj( Rftilde( in, tau ) / tau , 1/tau );
+    [xStar, objVals, alphas] = gPDHG_wls(z0, proxf, proxgconj, ...
+        f, g, Amat, B, 'maxIter', maxIter, 'tau0', tau,'beta0', 1, 'verbose', true);
+    % [xStar, objVals, alphas] = pdhg(z0, proxf, proxgconj, tau,...
+    %     'f', f, 'g', g, 'A', Amat, 'normA', 2, 'N', maxIter, 'verbose', false, 'tol', 1e-15);
 
-        [xStar,objVals,alphas_aoi] = avgOpIter_wLS( x0(:), S_pdDR, 'N', maxIter, ...
-            'objFunction', objtilde, 'verbose', true, 'printEvery', 20, 'doLineSearchTest', true );
+    % S_pdDR = @(in) -tau * Rgtildeconj( Rftilde( in, tau ) / tau , 1/tau );
+    %
+    % [xStar,objVals,alphas_aoi] = avgOpIter_wLS( x0(:), S_pdDR, 'N', maxIter, ...
+    %     'objFunction', objtilde, 'verbose', true, 'printEvery', 20, 'doLineSearchTest', true );
 
-        % [xStar, objVals] = pdhgWLS(z0, proxf, proxgconj, 'beta', 1, 'tau', tau,...
-        %     'A', Amat, 'f', f, 'g', g, 'N', maxIter, 'verbose', true);
+    % [xStar, objVals] = pdhgWLS(z0, proxf, proxgconj, 'beta', 1, 'tau', tau,...
+    %     'A', Amat, 'f', f, 'g', g, 'N', maxIter, 'verbose', true);
 
-        obj_vals(tau_idx, :) = objVals;
-        final_vals(tau_idx, :) = proxf(xStar(1:n), tau);
-    end
-        % figure; plot(xStar_new);
+    obj_vals(tau_idx, :) = objVals;
+    final_vals(tau_idx, :) = xStar;
 end
-save tv_1d_pdhgwls_lambda10_new.mat
+        % figure; plot(xStar_new);
+save 1211_tv_1d_gpdhg_fixed.mat

@@ -51,7 +51,7 @@ parfor coilIdx = 1:8
     [~,phaseImg] = mri_reconPartialFourier( fftSamples_wavACR_pf, sFSR );
     phases = angle( phaseImg );
 
-    N = 1000;
+    N = 5000;
     % gamma = 10.^(-3);
     tau0 = 10^-1;
 
@@ -85,6 +85,6 @@ figure; imshowscale(abs(pdhgRecon)); title('pdhg recon')
 % figure; imshowscale(abs(csRecon)); title('cs recon')
 go = squeeze(cell2mat(gpdhgObjvals));
 po = squeeze(cell2mat(pdhgObjvals));
-figure; hold on; plot(go(:, 4), 'LineWidth', 2, 'DisplayName', 'gpdhg');
-plot(po(:, 4), 'LineWidth', 2, 'DisplayName', 'pdhg');
+figure; hold on; plot(go(:, 6), 'LineWidth', 2, 'DisplayName', 'gpdhg');
+plot(po(:, 6), 'LineWidth', 2, 'DisplayName', 'pdhg');
 legend()

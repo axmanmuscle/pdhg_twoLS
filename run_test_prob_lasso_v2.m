@@ -34,7 +34,7 @@ lambdas = [3];
 
 num_lambda = numel(lambdas);
 num_tau = numel(taus);
-maxIter = 100;
+maxIter = 2000;
 
 objVals_gpdhg_all = zeros([num_lambda num_tau maxIter]);
 objVals_pdhg_all = zeros([num_lambda num_tau maxIter]);
@@ -64,7 +64,7 @@ for lambda_idx = 1:num_lambda
     Rgtilde = @(x, t) 2*proxgtilde(x,t) - x;
     Rgtildeconj = @(x, t) 2*proxgtildeconj(x, t) - x;
 
-    for tau_idx = 9
+    parfor tau_idx = 1:num_tau
         x0 = zeros([n+n 1]);
         tau = taus(tau_idx);
 
@@ -95,7 +95,7 @@ for lambda_idx = 1:num_lambda
     end
 end
 
-save lasso_test5.mat
+save 1211_fixed_lasso.mat
 
 
 end
