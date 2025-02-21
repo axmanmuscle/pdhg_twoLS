@@ -53,38 +53,44 @@ parfor coilIdx = 1:8
 
     N = 5000;
     % gamma = 10.^(-3);
-    tau0 = 10^-1;
+    tau0 = 10^-0.75;
 
     [xStar_pdhg, objVals_pdhg] = mri_reconCSPFHomodyne( fftSamples_wavACR_pf, sFSR, 'wavSplit', wavSplit, ...
         'alg', 'pdhg', 'N', N, 'gamma', 1e2 );
-    [xStar_gpdhg, objVals_gpdhg] = mri_reconCSPFHomodyne( fftSamples_wavACR_pf, sFSR, 'wavSplit', wavSplit, ...
-        'alg', 'gpdhg', 'N', N, 'tau0', 1);
+    % [xStar_gpdhg, objVals_gpdhg] = mri_reconCSPFHomodyne( fftSamples_wavACR_pf, sFSR, 'wavSplit', wavSplit, ...
+    %     'alg', 'gpdhg', 'N', N, 'tau0', 1);
+    [xStar_pdhgwls, objVals_pdhgwls] = mri_reconCSPFHomodyne( fftSamples_wavACR_pf, sFSR, 'wavSplit', wavSplit, ...
+        'alg', 'pdhg_wls', 'N', N, 'tau0', tau0 );
     % [xStar_cs, objVals_cs] = mri_reconCSWithPDHG( fftSamples_wavACR_pf, 'wavSplit', wavSplit );
     % [xStar_ls, objVals_ls] = mri_reconCSPFHomodyne( fftSamples_wavACR_pf, sFSR, 'wavSplit', wavSplit, ...
     % 'alg', 'primalDualDR_avgOp_wls', 'gamma', gamma, 'N', N );
 
     % csRecons{1,1,coilIdx} = xStar_cs;
-    gpdhgRecons{1, 1, coilIdx} = xStar_gpdhg;
+    % gpdhgRecons{1, 1, coilIdx} = xStar_gpdhg;
     pdhgRecons{1,1,coilIdx} = xStar_pdhg;
+    pdhgWlsRecons{1,1,coilIdx} = xStar_pdhgwls;
 
-    gpdhgObjvals{1,1,coilIdx} = objVals_gpdhg;
+    % gpdhgObjvals{1,1,coilIdx} = objVals_gpdhg;
     pdhgObjvals{1,1,coilIdx} = objVals_pdhg;
+    pdhgWlsObjvals{1,1,coilIdx} = objVals_pdhgwls;
     % csObjvals{1,1,coilIdx} = objVals_cs;
 
 
 end
 
-
-linesearchRecons = cell2mat( gpdhgRecons ); linesearchRecon = mri_reconRoemer( linesearchRecons );
-figure; imshowscale(abs(linesearchRecon)); title('gpdhg recon')
-
-pdhgRecons = cell2mat( pdhgRecons ); pdhgRecon = mri_reconRoemer( pdhgRecons );
-figure; imshowscale(abs(pdhgRecon)); title('pdhg recon')
+% 
+% linesearchRecons = cell2mat( gpdhgRecons ); linesearchRecon = mri_reconRoemer( linesearchRecons );
+% figure; imshowscale(abs(linesearchRecon)); title('gpdhg recon')
+% 
+% pdhgRecons = cell2mat( pdhgRecons ); pdhgRecon = mri_reconRoemer( pdhgRecons );
+% figure; imshowscale(abs(pdhgRecon)); title('pdhg recon')
 
 % csRecons = cell2mat( csRecons ); csRecon = mri_reconRoemer( csRecons );
 % figure; imshowscale(abs(csRecon)); title('cs recon')
-go = squeeze(cell2mat(gpdhgObjvals));
-po = squeeze(cell2mat(pdhgObjvals));
-figure; hold on; plot(go(:, 6), 'LineWidth', 2, 'DisplayName', 'gpdhg');
-plot(po(:, 6), 'LineWidth', 2, 'DisplayName', 'pdhg');
-legend()
+% go = squeeze(cell2mat(gpdhgObjvals));
+% po = squeeze(cell2mat(pdhgObjvals));
+% figure; hold on; plot(go(:, 6), 'LineWidth', 2, 'DisplayName', 'gpdhg');
+% plot(po(:, 6), 'LineWidth', 2, 'DisplayName', 'pdhg');
+% legend()
+
+save 122_ankle_wls.mat
