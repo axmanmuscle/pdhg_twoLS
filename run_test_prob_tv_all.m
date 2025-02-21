@@ -48,6 +48,8 @@ B = Bt';
 m = size(B, 1);
 
 clear G Bt;
+A = sparse(A);
+B = sparse(B);
 % clear B;
 
 sizex = size(computeGradient(noised_im));
@@ -60,6 +62,7 @@ sizex = size(computeGradient(noised_im));
 lambda = 0.03;
 gammas = 10.^(-4:0.5:4);
 %gammas = [10^-0.5];
+% gammas = [10.^4];
 maxIter = 1000;
 
 num_gammas = numel(gammas);
@@ -77,6 +80,8 @@ gpdhg_finalvals = zeros([ num_gammas n]);
 pdhgwls_objvals = zeros([ num_gammas maxIter+1]);
 pdhgwls_finalvals = zeros([ num_gammas n]);
 
+gpdhg2_objvals = zeros([ num_gammas maxIter]);
+gpdhg2_finalvals = zeros([ num_gammas n]);
 
 x0 = zeros([n + m, 1]);
 lstr = sprintf('lambda %f', lambda);
@@ -123,33 +128,38 @@ parfor gamma_idx = 1:num_gammas
     [xStar_gpdhg, objVals_gpdhg] = gPDHG_wls(z0, proxf_flat, proxgconj, fflat, g, A, ...
         B, 'maxIter', maxIter, 'tau0', tau, 'verbose', true);
 
+    [xStar_gpdhg2, objVals_gpdhg2] = test_gpdhg(z0, proxf_flat, proxgconj, fflat, g, A, ...
+        B, 'maxIter', maxIter, 'tau0', tau, 'verbose', true);
+
     [xStar_pdhg, objVals_pdhg] = pdhg(z0, proxf_flat, proxgconj, tau, 'f', fflat, ...
         'g', g, 'A', A, 'normA', normA, 'N', maxIter, 'verbose', true, 'tol', 1e-32);
 
     [xStar_pdhgWLS, objVals_pdhgWLS] = pdhgWLS(z0, proxf_flat, proxgconj, 'beta', 1, ...
         'tau', tau, 'f', fflat, 'g', g, 'A', A, 'N', maxIter, 'verbose', false);
 
-    % S_pdDR = @(in) -tau * Rgtildeconj( Rftilde( in, tau) / tau, 1/tau);
-    %
-    % [xStar_aoi,objVals_aoi] = avgOpIter_wLS( x0(:), S_pdDR, 'N', maxIter, ...
-    %         'objFunction', objtilde, 'verbose', false, 'printEvery', 20, 'doLineSearchTest', true );
-    %
-    % xStar_aoi_final = proxftilde(xStar_aoi, tau);
+    S_pdDR = @(in) -tau * Rgtildeconj( Rftilde( in, tau) / tau, 1/tau);
 
-    % aoi_objvals(gamma_idx, :) = objVals_aoi;
+    [xStar_aoi,objVals_aoi] = avgOpIter_wLS( x0(:), S_pdDR, 'N', maxIter, ...
+            'objFunction', objtilde, 'verbose', false, 'printEvery', 20, 'doLineSearchTest', true );
+
+    xStar_aoi_final = proxftilde(xStar_aoi, tau);
+
+    aoi_objvals(gamma_idx, :) = objVals_aoi;
     pdhg_objvals(gamma_idx, :) = objVals_pdhg;
     gpdhg_objvals(gamma_idx, :) = objVals_gpdhg;
     pdhgwls_objvals(gamma_idx, :) = objVals_pdhgWLS;
+    gpdhg2_objvals(gamma_idx, :) = objVals_gpdhg2;
 
-    % aoi_finalvals(gamma_idx, :) = xStar_aoi_final(1:n);
+    aoi_finalvals(gamma_idx, :) = xStar_aoi_final(1:n);
     pdhg_finalvals(gamma_idx, :) = xStar_pdhg;
     gpdhg_finalvals(gamma_idx, :) = xStar_gpdhg;
     pdhgwls_finalvals(gamma_idx, :) = xStar_pdhgWLS;
+    gpdhg2_finalvals(gamma_idx, :) = xStar_gpdhg2;
 end
 
 
 clear A B;
-save 1211_tv2d_fixed.mat aoi_objvals pdhg_objvals gpdhg_objvals pdhgwls_objvals aoi_finalvals pdhg_finalvals gpdhg_finalvals pdhgwls_finalvals
+save 1213_tv2d_fixed.mat aoi_objvals pdhg_objvals gpdhg_objvals pdhgwls_objvals gpdhg2_objvals aoi_finalvals pdhg_finalvals gpdhg_finalvals pdhgwls_finalvals gpdhg2_finalvals
 
 end
 

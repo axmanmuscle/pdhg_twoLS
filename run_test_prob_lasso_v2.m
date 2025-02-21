@@ -19,6 +19,9 @@ B = Bt';
 
 clear Bt;
 
+A = sparse(A);
+B = sparse(B);
+
 f = @(in) 0.5 * norm(in - b, 2)^2;
 
 proxf = @(in, t) proxL2Sq(in, t, b);
@@ -29,12 +32,12 @@ Rftilde = @(in, t) [proxf(in(1:n), t); zeros([n 1])];
 z0 = zeros([n 1]);
 
 % lambdas = [0.01 0.1 0.5 1 10];
-taus = 2.^(-4:0.5:4);
+taus = 2.^(-0.5);
 lambdas = [3];
 
 num_lambda = numel(lambdas);
 num_tau = numel(taus);
-maxIter = 2000;
+maxIter = 400;
 
 objVals_gpdhg_all = zeros([num_lambda num_tau maxIter]);
 objVals_pdhg_all = zeros([num_lambda num_tau maxIter]);
@@ -64,9 +67,12 @@ for lambda_idx = 1:num_lambda
     Rgtilde = @(x, t) 2*proxgtilde(x,t) - x;
     Rgtildeconj = @(x, t) 2*proxgtildeconj(x, t) - x;
 
-    parfor tau_idx = 1:num_tau
+    for tau_idx = 1:num_tau
         x0 = zeros([n+n 1]);
         tau = taus(tau_idx);
+
+        [xStar_gpdhg2, objVals_gpdhg2] = test_gpdhg(z0, proxf, proxgconj, f, g, A, ...
+            B, 'maxIter', maxIter, 'tau0', tau, 'beta0', 1, 'verbose', true);
 
         [xStar_gpdhg, objVals_gpdhg] = gPDHG_wls(z0, proxf, proxgconj, f, g, A, ...
             B, 'maxIter', maxIter, 'tau0', tau, 'beta0', 1, 'verbose', true);
@@ -79,8 +85,8 @@ for lambda_idx = 1:num_lambda
 
         S_pdDR = @(in) -tau * Rgtildeconj( Rftilde( in, tau) / tau, 1/tau);
 
-        [xStar_aoi,objVals_aoi] = avgOpIter_wLS( x0(:), S_pdDR, 'N', maxIter, ...
-                'objFunction', objtilde, 'verbose', false, 'printEvery', 20, 'doLineSearchTest', true );
+        % [xStar_aoi,objVals_aoi] = avgOpIter_wLS( x0(:), S_pdDR, 'N', maxIter, ...
+        %         'objFunction', objtilde, 'verbose', false, 'printEvery', 20, 'doLineSearchTest', true );
 
         objVals_gpdhg_all(lambda_idx, tau_idx, :) = objVals_gpdhg;
         objVals_pdhg_all(lambda_idx, tau_idx, :) = objVals_pdhg;

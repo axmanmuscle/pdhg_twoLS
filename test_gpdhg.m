@@ -1,5 +1,7 @@
-function [xOut, objVals, alphasUsed] = gPDHG_wls( x0, proxf, proxgconj, f, g, A, B, varargin )
+function [xOut, objVals, alphasUsed] = test_gpdhg( x0, proxf, proxgconj, f, g, A, B, varargin )
   % implements our new generalized PDHG with line search
+  % this version is going to use the same operator instead of different
+  % operators inside the line search iterations
 
   p = inputParser;
   p.addParameter( 'f', [] );
@@ -66,6 +68,8 @@ function [xOut, objVals, alphasUsed] = gPDHG_wls( x0, proxf, proxgconj, f, g, A,
   
   S = @(xIn, zIn, tauk, alpha, thetak) applyS_pdhgwLS_op(xIn, zIn, proxf, proxgconj, beta0, tauk, thetak, alpha, applyA, applyAt, applyBt);
 
+  S_nols = @(xIn, zIn, tauk, alpha) applyS_nols(xIn, zIn, proxf, proxgconj, beta0, tauk, alpha, applyA, applyAt, applyBt);
+
   nAlphas = numel( alphas );
   normRks = zeros( nAlphas, 1 );
   tauks = cell( 1, nAlphas );
@@ -90,11 +94,13 @@ function [xOut, objVals, alphasUsed] = gPDHG_wls( x0, proxf, proxgconj, f, g, A,
               alpha = alphas( alphaIndx );
               % this is eq (6) in Boyd's LS paper
               % performs xkp1 = xk + alphak(Sxk - xk)
-              [xOutp1, zOutp1, taukp1, ~, thetakp1] = S(xOut, zOut, tauk, alpha, thetak);
+              [xOutp1, zOutp1, taukp1, ~, thetaAlpha] = S(xOut, zOut, tauk, alpha, thetak);
 
               % this now gets the next step, rkalpha = Sxk+1 - xk+1
-              [xOutAlpha, zOutAlpha, taukAlpha, nrkAlpha, thetaAlpha] = S(xOutp1, zOutp1, taukp1, alpha, thetakp1);
-              tauks{alphaIndx} = taukAlpha;
+              % [xOutAlpha, zOutAlpha, taukAlpha, nrkAlpha, thetaAlpha] = S(xOutp1, zOutp1, taukp1, alpha, thetakp1);
+              %%% just do PDHG iters here?
+              [xOutAlpha, zOutAlpha, nrkAlpha] = S_nols(xOutp1, zOutp1, tauk, alpha);
+              tauks{alphaIndx} = taukp1;
               xks{alphaIndx} = xOutAlpha;
               zks{alphaIndx} = zOutAlpha;
               thetaks{alphaIndx} = thetaAlpha;

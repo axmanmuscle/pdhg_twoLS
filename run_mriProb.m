@@ -1,8 +1,8 @@
 % load('kData_knee.mat', 'kData');
-% load('brain.mat', 'd2');
-% kData = d2;
-load('ankle.mat')
-kData = d1;
+load('brain.mat', 'd2');
+kData = d2;
+% load('ankle.mat')
+% kData = d1;
 rng(20240429);
 
 kData = kData./max(abs(kData(:)));
@@ -35,7 +35,7 @@ pdhgObjvals = cell(1,1,8);
 csObjvals = cell(1,1,8);
 
 
-parfor coilIdx = 1:8
+for coilIdx = 1:8
 %for coilIdx = 8
     disp(coilIdx);
     coilData = fftSamples_wavACR(:,:,coilIdx);
@@ -55,8 +55,8 @@ parfor coilIdx = 1:8
     % gamma = 10.^(-3);
     tau0 = 10^-1;
 
-    [xStar_pdhg, objVals_pdhg] = mri_reconCSPFHomodyne( fftSamples_wavACR_pf, sFSR, 'wavSplit', wavSplit, ...
-        'alg', 'pdhg', 'N', N, 'gamma', 1e2 );
+    % [xStar_pdhg, objVals_pdhg] = mri_reconCSPFHomodyne( fftSamples_wavACR_pf, sFSR, 'wavSplit', wavSplit, ...
+    %     'alg', 'pdhg', 'N', N, 'gamma', 1e2 );
     [xStar_gpdhg, objVals_gpdhg] = mri_reconCSPFHomodyne( fftSamples_wavACR_pf, sFSR, 'wavSplit', wavSplit, ...
         'alg', 'gpdhg', 'N', N, 'tau0', 1);
     % [xStar_cs, objVals_cs] = mri_reconCSWithPDHG( fftSamples_wavACR_pf, 'wavSplit', wavSplit );
