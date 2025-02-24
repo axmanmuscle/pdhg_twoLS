@@ -60,10 +60,10 @@ sizex = size(computeGradient(noised_im));
 % lambdas = [0.01 0.05 0.1 0.15 0.175 0.2]
 % lambdas = [0.01 0.02 0.03 0.05 0.2];
 lambda = 0.03;
-gammas = 10.^(-4:0.5:4);
+gammas = 10.^(-4:4);
 %gammas = [10^-0.5];
 % gammas = [10.^4];
-maxIter = 1000;
+maxIter = 5000;
 
 num_gammas = numel(gammas);
 %save tv2d_rundata_1122.mat;
@@ -118,6 +118,14 @@ Rgtildeconj = @(x, t) 2*proxgtildeconj(x, t) - x;
 best_idx = 0;
 best_obj = Inf;
 
+% % optimal value
+% z0 = zeros([n 1]);
+% tau = 10^1.5;
+% [xStar_optimal, objVals_optimal] = pdhgWLS(z0, proxf_flat, proxgconj, 'beta', 1, ...
+%          'tau', tau, 'f', fflat, 'g', g, 'A', A, 'N', 50000, 'verbose', true);
+% 
+% save 2_22_2d_optimal xStar_optimal objVals_optimal
+
 parfor gamma_idx = 1:num_gammas
     z0 = zeros([n 1]);
     disp(gamma_idx);
@@ -159,7 +167,7 @@ end
 
 
 clear A B;
-save 1213_tv2d_fixed.mat aoi_objvals pdhg_objvals gpdhg_objvals pdhgwls_objvals gpdhg2_objvals aoi_finalvals pdhg_finalvals gpdhg_finalvals pdhgwls_finalvals gpdhg2_finalvals
+save 222_2dtv_newgpdhg.mat gammas aoi_objvals pdhg_objvals gpdhg_objvals pdhgwls_objvals gpdhg2_objvals aoi_finalvals pdhg_finalvals gpdhg_finalvals pdhgwls_finalvals gpdhg2_finalvals
 
 end
 

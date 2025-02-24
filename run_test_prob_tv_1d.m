@@ -48,23 +48,15 @@ Rftilde = @(in, t) 2*proxftilde(in, t) - in;
 %lambdas = [0.01, 0.1, 1, 2, 5, 10, 100, 1000];
 lambda = 10;
 
-% taus = 10.^(-5:0.5:3);
+taus = 10.^(-5:0.5:3);
 %betas = 10.^(-1:0.5:1);
-taus = [10^-.5];
+% taus = [10^-.5];
 % taus = [10.^3]
 betas = [1];
-maxIter = 500;
-
-obj_vals = zeros([numel(taus) ]);
-obj_vals( :, maxIter) = 0;
-
-final_vals = zeros([numel(taus) ]);
-final_vals(:, n) = 0;
+maxIter = 1000;
 
 num_taus = numel(taus);
 %num_betas = numel(betas);
-
-
 g = @(in) lambda * norm(in, 1);
 ga = @(in) lambda * norm(A(in), 1);
 proxgconj = @(in, t) proxConjL1(in, t, lambda);
@@ -79,33 +71,65 @@ Rgtildeconj = @(x, t) 2*proxgtildeconj(x, t) - x;
 
 z0 = zeros(size(C));
 
+%% optimal value
+[xStar_optimal, objVals_optimal, alphas] = pdhg(z0, proxf, proxgconj, 10^-0.5,...
+        'f', f, 'g', g, 'A', Amat, 'normA', 2, 'N', 75000, 'verbose', true, 'tol', 10^-32);
 
-for tau_idx = 1:num_taus
-    tau = taus(tau_idx);
-    disp(tau_idx)
-    objtilde = @(in) f(proxf(in(1:n), tau)) + gtilde(proxftilde(in, tau));
+save 2_22_1d_optimal xStar_optimal objVals_optimal
 
-    x0 = zeros([n+m 1]);
-
-    [xStar_gpdhg, objVals_gpdhg, alphas] = gPDHG_wls(z0, proxf, proxgconj, ...
-        f, g, Amat, B, 'maxIter', maxIter, 'tau0', tau,'beta0', 1, 'verbose', true);
-
-    [xStar_gpdhg2, objVals_gpdhg2, alphas] = test_gpdhg(z0, proxf, proxgconj, ...
-        f, g, Amat, B, 'maxIter', maxIter, 'tau0', tau,'beta0', 1, 'verbose', true);
-
-    [xStar_pdhg, objVals_pdhg, alphas] = pdhg(z0, proxf, proxgconj, tau,...
-        'f', f, 'g', g, 'A', Amat, 'normA', 2, 'N', maxIter, 'verbose', false, 'tol', 1e-15);
-
-    S_pdDR = @(in) -tau * Rgtildeconj( Rftilde( in, tau ) / tau , 1/tau );
-
-    [xStar,objVals,alphas_aoi] = avgOpIter_wLS( x0(:), S_pdDR, 'N', maxIter, ...
-        'objFunction', objtilde, 'verbose', true, 'printEvery', 20, 'doLineSearchTest', true );
-
-    % [xStar, objVals] = pdhgWLS(z0, proxf, proxgconj, 'beta', 1, 'tau', tau,...
-    %     'A', Amat, 'f', f, 'g', g, 'N', maxIter, 'verbose', true);
-
-    % obj_vals(tau_idx, :) = objVals;
-    % final_vals(tau_idx, :) = xStar;
-end
-        % figure; plot(xStar_new);
-% save 1212_tv_1d_gpdhg_fixed.mat
+% aoi_objvals = zeros([num_taus maxIter]);
+% aoi_finalvals = zeros([ num_taus n]);
+% 
+% pdhg_objvals = zeros([ num_taus maxIter]);
+% pdhg_finalvals = zeros([ num_taus n]);
+% 
+% gpdhg_objvals = zeros([ num_taus maxIter]);
+% gpdhg_finalvals = zeros([ num_taus n]);
+% 
+% pdhgwls_objvals = zeros([ num_taus maxIter+1]);
+% pdhgwls_finalvals = zeros([ num_taus n]);
+% 
+% gpdhg2_objvals = zeros([ num_taus maxIter]);
+% gpdhg2_finalvals = zeros([ num_taus n]);
+% 
+% 
+% parfor tau_idx = 1:num_taus
+%     tau = taus(tau_idx);
+%     disp(tau_idx)
+%     objtilde = @(in) f(proxf(in(1:n), tau)) + gtilde(proxftilde(in, tau));
+% 
+%     x0 = zeros([n+m 1]);
+% 
+%     [xStar_gpdhg, objVals_gpdhg, alphas] = gPDHG_wls(z0, proxf, proxgconj, ...
+%         f, g, Amat, B, 'maxIter', maxIter, 'tau0', tau,'beta0', 1, 'verbose', true);
+% 
+%     [xStar_gpdhg2, objVals_gpdhg2, alphas] = test_gpdhg(z0, proxf, proxgconj, ...
+%         f, g, Amat, B, 'maxIter', maxIter, 'tau0', tau,'beta0', 1, 'verbose', true);
+% 
+%     [xStar_pdhg, objVals_pdhg, alphas] = pdhg(z0, proxf, proxgconj, tau,...
+%         'f', f, 'g', g, 'A', Amat, 'normA', 2, 'N', maxIter, 'verbose', false, 'tol', 1e-15);
+% 
+%     S_pdDR = @(in) -tau * Rgtildeconj( Rftilde( in, tau ) / tau , 1/tau );
+% 
+%     [xStar_aoi,objVals_aoi,alphas_aoi] = avgOpIter_wLS( x0(:), S_pdDR, 'N', maxIter, ...
+%         'objFunction', objtilde, 'verbose', true, 'printEvery', 20, 'doLineSearchTest', true );
+% 
+%     [xStar_pdhgWLS, objVals_pdhgWLS] = pdhgWLS(z0, proxf, proxgconj, 'beta', 1, 'tau', tau,...
+%         'A', Amat, 'f', f, 'g', g, 'N', maxIter, 'verbose', true);
+% 
+%     xStar_aoi_final = proxftilde(xStar_aoi, tau);
+% 
+%     aoi_objvals(tau_idx, :) = objVals_aoi;
+%     pdhg_objvals(tau_idx, :) = objVals_pdhg;
+%     gpdhg_objvals(tau_idx, :) = objVals_gpdhg;
+%     pdhgwls_objvals(tau_idx, :) = objVals_pdhgWLS;
+%     gpdhg2_objvals(tau_idx, :) = objVals_gpdhg2;
+% 
+%     aoi_finalvals(tau_idx, :) = xStar_aoi_final(1:n);
+%     pdhg_finalvals(tau_idx, :) = xStar_pdhg;
+%     gpdhg_finalvals(tau_idx, :) = xStar_gpdhg;
+%     pdhgwls_finalvals(tau_idx, :) = xStar_pdhgWLS;
+%     gpdhg2_finalvals(tau_idx, :) = xStar_gpdhg2;
+% end
+%         % figure; plot(xStar_new);
+% save 221_tv1d_new_gpdhg.mat

@@ -32,19 +32,21 @@ Rftilde = @(in, t) [proxf(in(1:n), t); zeros([n 1])];
 z0 = zeros([n 1]);
 
 % lambdas = [0.01 0.1 0.5 1 10];
-taus = 2.^(-0.5);
+taus = 2.^(-4:0.5:4);
 lambdas = [3];
 
 num_lambda = numel(lambdas);
 num_tau = numel(taus);
-maxIter = 400;
+maxIter = 2000;
 
 objVals_gpdhg_all = zeros([num_lambda num_tau maxIter]);
+objVals_gpdhg2_all = zeros([num_lambda num_tau maxIter]);
 objVals_pdhg_all = zeros([num_lambda num_tau maxIter]);
 objVals_pdhgWls_all = zeros([num_lambda num_tau maxIter+1]);
 objVals_aoi_all = zeros([num_lambda num_tau maxIter]);
 
 x_gpdhg_all = zeros([num_lambda num_tau n]);
+x_gpdhg2_all = zeros([num_lambda num_tau n]);
 x_pdhg_all = zeros([num_lambda num_tau n]);
 x_pdhgWls_all = zeros([num_lambda num_tau n]);
 x_aoi_all = zeros([num_lambda num_tau n]);
@@ -67,7 +69,7 @@ for lambda_idx = 1:num_lambda
     Rgtilde = @(x, t) 2*proxgtilde(x,t) - x;
     Rgtildeconj = @(x, t) 2*proxgtildeconj(x, t) - x;
 
-    for tau_idx = 1:num_tau
+    parfor tau_idx = 1:num_tau
         x0 = zeros([n+n 1]);
         tau = taus(tau_idx);
 
@@ -85,15 +87,17 @@ for lambda_idx = 1:num_lambda
 
         S_pdDR = @(in) -tau * Rgtildeconj( Rftilde( in, tau) / tau, 1/tau);
 
-        % [xStar_aoi,objVals_aoi] = avgOpIter_wLS( x0(:), S_pdDR, 'N', maxIter, ...
-        %         'objFunction', objtilde, 'verbose', false, 'printEvery', 20, 'doLineSearchTest', true );
+        [xStar_aoi,objVals_aoi] = avgOpIter_wLS( x0(:), S_pdDR, 'N', maxIter, ...
+                'objFunction', objtilde, 'verbose', false, 'printEvery', 20, 'doLineSearchTest', true );
 
         objVals_gpdhg_all(lambda_idx, tau_idx, :) = objVals_gpdhg;
+        objVals_gpdhg2_all(lambda_idx, tau_idx, :) = objVals_gpdhg2;
         objVals_pdhg_all(lambda_idx, tau_idx, :) = objVals_pdhg;
         objVals_pdhgWls_all(lambda_idx, tau_idx, :) = objVals_pdhgWLS;
         objVals_aoi_all(lambda_idx, tau_idx, :) = objVals_aoi;
 
         x_gpdhg_all(lambda_idx, tau_idx, :) = xStar_gpdhg;
+        x_gpdhg_all(lambda_idx, tau_idx, :) = xStar_gpdhg2;
         x_pdhg_all(lambda_idx, tau_idx, :) = xStar_pdhg;
         x_pdhgWls_all(lambda_idx, tau_idx, :) = xStar_pdhgWLS;
         x_aoi_all(lambda_idx, tau_idx, :) = xStar_aoi(1:n);
